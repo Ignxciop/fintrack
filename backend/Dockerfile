@@ -1,5 +1,8 @@
 FROM node:20-alpine
 
+# Instalar wget para health check
+RUN apk add --no-cache wget
+
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
