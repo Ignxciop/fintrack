@@ -5,6 +5,17 @@ import { prisma } from "../../src/config/prisma.js";
  */
 export async function cleanupTestData() {
     try {
+        // Eliminar códigos de verificación de usuarios de prueba
+        await prisma.verificationCode.deleteMany({
+            where: {
+                user: {
+                    email: {
+                        contains: "_test@",
+                    },
+                },
+            },
+        });
+
         // Eliminar tokens de usuarios de prueba
         await prisma.refreshToken.deleteMany({
             where: {
@@ -46,6 +57,7 @@ export async function createTestUser(data = {}) {
     const password = data.password || "password123";
     const name = data.name || "Test User";
     const lastname = data.lastname || "Test Lastname";
+    const isVerified = data.isVerified !== undefined ? data.isVerified : true; // Por defecto verificado para tests
 
     const bcrypt = await import("bcryptjs");
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -56,6 +68,7 @@ export async function createTestUser(data = {}) {
             password: hashedPassword,
             name,
             lastname,
+            isVerified,
         },
     });
 

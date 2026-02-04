@@ -34,7 +34,7 @@ describe("AuthService - Unit Tests", () => {
     });
 
     describe("register", () => {
-        it("debe registrar un nuevo usuario exitosamente", async () => {
+        it("debe registrar un nuevo usuario y requerir verificación", async () => {
             const email = generateTestEmail("register");
             const userData = {
                 email,
@@ -46,13 +46,15 @@ describe("AuthService - Unit Tests", () => {
             const result = await AuthService.register(userData);
 
             expect(result).toHaveProperty("user");
-            expect(result).toHaveProperty("accessToken");
-            expect(result).toHaveProperty("refreshToken");
+            expect(result).toHaveProperty("requiresVerification", true);
+            expect(result).not.toHaveProperty("accessToken");
+            expect(result).not.toHaveProperty("refreshToken");
             expect(result.user.email).toBe(email);
+            expect(result.user.isVerified).toBe(false);
             expect(result.user).not.toHaveProperty("password");
         });
 
-        it("debe fallar si el usuario ya existe", async () => {
+        it("debe permitir re-registro de email no verificado", async () => {
             const email = generateTestEmail("duplicate");
             const userData = {
                 email,
@@ -61,11 +63,14 @@ describe("AuthService - Unit Tests", () => {
                 lastname: "User",
             };
 
-            await AuthService.register(userData);
+            // Primer registro
+            const firstResult = await AuthService.register(userData);
+            expect(firstResult.requiresVerification).toBe(true);
 
-            await expect(AuthService.register(userData)).rejects.toThrow(
-                "El usuario ya existe",
-            );
+            // Segundo registro del mismo email (no verificado)
+            const secondResult = await AuthService.register(userData);
+            expect(secondResult.requiresVerification).toBe(true);
+            expect(secondResult.user.email).toBe(email);
         });
 
         it("debe hashear la contraseña", async () => {
@@ -86,12 +91,12 @@ describe("AuthService - Unit Tests", () => {
     });
 
     describe("login", () => {
-        it("debe iniciar sesión con credenciales válidas", async () => {
+        it("debe iniciar sesión con credenciales válidas para usuario verificado", async () => {
             const email = generateTestEmail("login");
             const password = "password123";
 
-            // Crear usuario primero
-            await createTestUser({ email, password });
+            // Crear usuario verificado
+            await createTestUser({ email, password, isVerified: true });
 
             const result = await AuthService.login({ email, password });
 
@@ -112,7 +117,11 @@ describe("AuthService - Unit Tests", () => {
 
         it("debe fallar con contraseña incorrecta", async () => {
             const email = generateTestEmail("wrongpass");
-            await createTestUser({ email, password: "correctpass" });
+            await createTestUser({
+                email,
+                password: "correctpass",
+                isVerified: true,
+            });
 
             await expect(
                 AuthService.login({

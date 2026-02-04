@@ -30,7 +30,7 @@ describe("Auth API - E2E Tests", () => {
     });
 
     describe("POST /api/auth/register", () => {
-        it("debe registrar un nuevo usuario y retornar tokens", async () => {
+        it("debe registrar un nuevo usuario y requerir verificación", async () => {
             const email = generateTestEmail("register");
             const userData = {
                 email,
@@ -46,13 +46,18 @@ describe("Auth API - E2E Tests", () => {
 
             expect(response.body.success).toBe(true);
             expect(response.body.data).toHaveProperty("user");
-            expect(response.body.data).toHaveProperty("accessToken");
-            expect(response.body.data).toHaveProperty("refreshToken");
+            expect(response.body.data).toHaveProperty(
+                "requiresVerification",
+                true,
+            );
+            expect(response.body.data).not.toHaveProperty("accessToken");
+            expect(response.body.data).not.toHaveProperty("refreshToken");
             expect(response.body.data.user.email).toBe(email);
+            expect(response.body.data.user.isVerified).toBe(false);
             expect(response.body.data.user).not.toHaveProperty("password");
         });
 
-        it("debe fallar con email duplicado", async () => {
+        it("debe permitir re-registro de email no verificado", async () => {
             const email = generateTestEmail("duplicate");
             const userData = {
                 email,
@@ -61,15 +66,17 @@ describe("Auth API - E2E Tests", () => {
                 lastname: "User",
             };
 
+            // Primer registro
             await request(app).post("/api/auth/register").send(userData);
 
+            // Segundo registro (debe permitir y regenerar código)
             const response = await request(app)
                 .post("/api/auth/register")
                 .send(userData)
-                .expect(409);
+                .expect(201);
 
-            expect(response.body.success).toBe(false);
-            expect(response.body.message).toBe("El usuario ya existe");
+            expect(response.body.success).toBe(true);
+            expect(response.body.data.requiresVerification).toBe(true);
         });
 
         it("debe fallar con datos inválidos", async () => {
@@ -98,10 +105,10 @@ describe("Auth API - E2E Tests", () => {
     });
 
     describe("POST /api/auth/login", () => {
-        it("debe iniciar sesión con credenciales válidas", async () => {
+        it("debe iniciar sesión con credenciales válidas para usuario verificado", async () => {
             const email = generateTestEmail("login");
             const password = "password123";
-            await createTestUser({ email, password });
+            await createTestUser({ email, password, isVerified: true });
 
             const response = await request(app)
                 .post("/api/auth/login")
@@ -130,7 +137,11 @@ describe("Auth API - E2E Tests", () => {
 
         it("debe fallar con contraseña incorrecta", async () => {
             const email = generateTestEmail("wrongpass");
-            await createTestUser({ email, password: "correctpassword" });
+            await createTestUser({
+                email,
+                password: "correctpassword",
+                isVerified: true,
+            });
 
             const response = await request(app)
                 .post("/api/auth/login")
@@ -229,7 +240,7 @@ describe("Auth API - E2E Tests", () => {
         it("debe cerrar sesión exitosamente", async () => {
             const email = generateTestEmail("logout");
             const password = "password123";
-            await createTestUser({ email, password });
+            await createTestUser({ email, password, isVerified: true });
 
             const loginResponse = await request(app)
                 .post("/api/auth/login")
@@ -256,7 +267,7 @@ describe("Auth API - E2E Tests", () => {
         it("debe retornar información del usuario autenticado", async () => {
             const email = generateTestEmail("getme");
             const password = "password123";
-            await createTestUser({ email, password });
+            await createTestUser({ email, password, isVerified: true });
 
             const loginResponse = await request(app)
                 .post("/api/auth/login")
@@ -407,6 +418,198 @@ describe("Auth API - E2E Tests", () => {
                 .expect(200);
 
             expect(loginResponse.body.data).toHaveProperty("accessToken");
+        });
+    });
+
+    describe("POST /api/auth/verify-email", () => {
+        it("debe verificar email con código correcto", async () => {
+            const email = generateTestEmail("verify");
+
+            // 1. Registrar usuario
+            await request(app)
+                .post("/api/auth/register")
+                .send({
+                    email,
+                    password: "password123",
+                    name: "Test",
+                    lastname: "User",
+                })
+                .expect(201);
+
+            // 2. Obtener código de la base de datos (simulando que lo recibió por email)
+            const user = await prisma.user.findUnique({ where: { email } });
+            const verification = await prisma.verificationCode.findFirst({
+                where: { userId: user.id, isUsed: false },
+                orderBy: { createdAt: "desc" },
+            });
+
+            // 3. Verificar email
+            const response = await request(app)
+                .post("/api/auth/verify-email")
+                .send({ email, code: verification.code })
+                .expect(200);
+
+            expect(response.body.success).toBe(true);
+            expect(response.body.data).toHaveProperty("accessToken");
+            expect(response.body.data).toHaveProperty("refreshToken");
+            expect(response.body.data.user.isVerified).toBe(true);
+        });
+
+        it("debe rechazar código inválido", async () => {
+            const email = generateTestEmail("invalid-code");
+
+            await request(app).post("/api/auth/register").send({
+                email,
+                password: "password123",
+                name: "Test",
+                lastname: "User",
+            });
+
+            const response = await request(app)
+                .post("/api/auth/verify-email")
+                .send({ email, code: "999999" })
+                .expect(400);
+
+            expect(response.body.success).toBe(false);
+            expect(response.body.message).toContain("Código inválido");
+        });
+
+        it("debe rechazar usuario ya verificado", async () => {
+            const email = generateTestEmail("already-verified");
+
+            // 1. Registrar
+            await request(app).post("/api/auth/register").send({
+                email,
+                password: "password123",
+                name: "Test",
+                lastname: "User",
+            });
+
+            // 2. Verificar
+            const user = await prisma.user.findUnique({ where: { email } });
+            const verification = await prisma.verificationCode.findFirst({
+                where: { userId: user.id, isUsed: false },
+            });
+
+            await request(app)
+                .post("/api/auth/verify-email")
+                .send({ email, code: verification.code })
+                .expect(200);
+
+            // 3. Intentar verificar nuevamente
+            const response = await request(app)
+                .post("/api/auth/verify-email")
+                .send({ email, code: verification.code })
+                .expect(400);
+
+            expect(response.body.success).toBe(false);
+            expect(response.body.message).toContain("ya está verificado");
+        });
+    });
+
+    describe("POST /api/auth/resend-verification", () => {
+        it("debe reenviar código de verificación", async () => {
+            const email = generateTestEmail("resend");
+
+            await request(app).post("/api/auth/register").send({
+                email,
+                password: "password123",
+                name: "Test",
+                lastname: "User",
+            });
+
+            const response = await request(app)
+                .post("/api/auth/resend-verification")
+                .send({ email })
+                .expect(200);
+
+            expect(response.body.success).toBe(true);
+            expect(response.body.message).toContain("reenviado");
+
+            // Verificar que se creó un nuevo código
+            const user = await prisma.user.findUnique({ where: { email } });
+            const codes = await prisma.verificationCode.findMany({
+                where: { userId: user.id },
+            });
+
+            expect(codes.length).toBeGreaterThan(1);
+        });
+
+        it("debe rechazar email no registrado", async () => {
+            const response = await request(app)
+                .post("/api/auth/resend-verification")
+                .send({ email: "noexiste_test@example.com" })
+                .expect(404);
+
+            expect(response.body.success).toBe(false);
+        });
+    });
+
+    describe("Email verification flow - registro con email duplicado no verificado", () => {
+        it("debe permitir re-registrar email no verificado y mostrar input de verificación", async () => {
+            const email = generateTestEmail("duplicate-unverified");
+
+            // 1. Primer registro
+            const firstRegister = await request(app)
+                .post("/api/auth/register")
+                .send({
+                    email,
+                    password: "password123",
+                    name: "Test",
+                    lastname: "User",
+                })
+                .expect(201);
+
+            expect(firstRegister.body.data.requiresVerification).toBe(true);
+            expect(firstRegister.body.data).not.toHaveProperty("accessToken");
+
+            // 2. Intentar registrar el mismo email (no verificado)
+            const secondRegister = await request(app)
+                .post("/api/auth/register")
+                .send({
+                    email,
+                    password: "password123",
+                    name: "Test",
+                    lastname: "User",
+                })
+                .expect(201);
+
+            expect(secondRegister.body.data.requiresVerification).toBe(true);
+            expect(secondRegister.body.data.user.email).toBe(email);
+            expect(secondRegister.body.data).not.toHaveProperty("accessToken");
+
+            // 3. Verificar que se invalidó el código anterior
+            const user = await prisma.user.findUnique({ where: { email } });
+            const activeCodes = await prisma.verificationCode.findMany({
+                where: {
+                    userId: user.id,
+                    isUsed: false,
+                    expiresAt: { gt: new Date() },
+                },
+            });
+
+            expect(activeCodes).toHaveLength(1);
+        });
+
+        it("debe rechazar login para usuario no verificado", async () => {
+            const email = generateTestEmail("login-unverified");
+
+            // 1. Registrar
+            await request(app).post("/api/auth/register").send({
+                email,
+                password: "password123",
+                name: "Test",
+                lastname: "User",
+            });
+
+            // 2. Intentar login sin verificar
+            const response = await request(app)
+                .post("/api/auth/login")
+                .send({ email, password: "password123" })
+                .expect(403);
+
+            expect(response.body.success).toBe(false);
+            expect(response.body.message).toContain("verificar tu email");
         });
     });
 });
