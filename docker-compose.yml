@@ -45,7 +45,7 @@ services:
             context: ./frontend
             dockerfile: Dockerfile
             args:
-                VITE_API_URL: "" # Vacío para usar proxy de nginx
+                VITE_API_URL: "/api"
         restart: unless-stopped
         ports:
             - "4005:4005"
