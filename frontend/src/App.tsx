@@ -5,6 +5,7 @@ import PublicRoute from "./components/PublicRoute";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 
 function App() {
     return (
@@ -25,6 +26,14 @@ function App() {
                         element={
                             <PublicRoute>
                                 <RegisterPage />
+                            </PublicRoute>
+                        }
+                    />
+                    <Route
+                        path="/verificacion"
+                        element={
+                            <PublicRoute>
+                                <VerifyEmailPage />
                             </PublicRoute>
                         }
                     />

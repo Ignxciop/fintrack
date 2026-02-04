@@ -5,6 +5,7 @@ export interface User {
     email: string;
     name: string;
     lastname: string;
+    isVerified: boolean;
     createdAt: string;
     updatedAt: string;
 }
@@ -14,8 +15,9 @@ export interface AuthResponse {
     message: string;
     data: {
         user: User;
-        accessToken: string;
-        refreshToken: string;
+        accessToken?: string;
+        refreshToken?: string;
+        requiresVerification?: boolean;
     };
 }
 
@@ -63,6 +65,20 @@ export const authService = {
     // Renovar token
     refreshToken: async (refreshToken: string): Promise<AuthResponse> => {
         const response = await api.post("/auth/refresh", { refreshToken });
+        return response.data;
+    },
+
+    // Verificar email con código
+    verifyEmail: async (email: string, code: string): Promise<AuthResponse> => {
+        const response = await api.post("/auth/verify-email", { email, code });
+        return response.data;
+    },
+
+    // Reenviar código de verificación
+    resendVerification: async (
+        email: string,
+    ): Promise<{ success: boolean; message: string }> => {
+        const response = await api.post("/auth/resend-verification", { email });
         return response.data;
     },
 };

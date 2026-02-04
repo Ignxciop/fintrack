@@ -31,7 +31,12 @@ export default function LoginPage() {
             await login(email, password);
             navigate("/");
         } catch (err: any) {
-            setError(err.response?.data?.message || "Error al iniciar sesión");
+            // Extraer el mensaje de error del backend
+            const errorMessage =
+                err.response?.data?.message ||
+                err.message ||
+                "Error al iniciar sesión";
+            setError(errorMessage);
         } finally {
             setIsLoading(false);
         }
@@ -83,7 +88,7 @@ export default function LoginPage() {
                         </div>
                     </CardContent>
 
-                    <CardFooter className="flex flex-col space-y-4">
+                    <CardFooter className="flex flex-col space-y-4 mt-2">
                         <Button
                             type="submit"
                             className="w-full"

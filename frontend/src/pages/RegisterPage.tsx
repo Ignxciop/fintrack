@@ -52,15 +52,33 @@ export default function RegisterPage() {
         setIsLoading(true);
 
         try {
-            await register(
+            const response = await register(
                 formData.email,
                 formData.password,
                 formData.name,
                 formData.lastname,
             );
-            navigate("/");
+
+            // Si requiere verificación, redirigir a página de verificación
+            if (response?.requiresVerification) {
+                // Guardar timestamp de expiración (5 minutos desde ahora)
+                const expiresAt = Date.now() + 5 * 60 * 1000;
+                localStorage.setItem(
+                    `verification_expires_${formData.email}`,
+                    expiresAt.toString(),
+                );
+                navigate("/verificacion", { state: { email: formData.email } });
+            } else {
+                // Si no requiere verificación (caso futuro), ir a home
+                navigate("/");
+            }
         } catch (err: any) {
-            setError(err.response?.data?.message || "Error al registrarse");
+            // Extraer el mensaje de error del backend
+            const errorMessage =
+                err.response?.data?.message ||
+                err.message ||
+                "Error al registrarse";
+            setError(errorMessage);
         } finally {
             setIsLoading(false);
         }
@@ -160,7 +178,7 @@ export default function RegisterPage() {
                         </div>
                     </CardContent>
 
-                    <CardFooter className="flex flex-col space-y-4">
+                    <CardFooter className="flex flex-col space-y-4 mt-2">
                         <Button
                             type="submit"
                             className="w-full"

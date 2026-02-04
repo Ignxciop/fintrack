@@ -13,7 +13,7 @@ interface AuthContextType {
         password: string,
         name: string,
         lastname: string,
-    ) => Promise<void>;
+    ) => Promise<{ requiresVerification?: boolean } | void>;
     logout: () => Promise<void>;
 }
 
@@ -46,12 +46,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }, []);
 
     const login = async (email: string, password: string) => {
-        const response = await authService.login({ email, password });
-        const { user, accessToken, refreshToken } = response.data;
+        try {
+            const response = await authService.login({ email, password });
+            const { user, accessToken, refreshToken } = response.data;
 
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("refreshToken", refreshToken);
-        setUser(user);
+            if (accessToken && refreshToken) {
+                localStorage.setItem("accessToken", accessToken);
+                localStorage.setItem("refreshToken", refreshToken);
+                setUser(user);
+            }
+        } catch (error) {
+            // Re-lanzar el error para que LoginPage pueda manejarlo
+            throw error;
+        }
     };
 
     const register = async (
@@ -60,17 +67,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         name: string,
         lastname: string,
     ) => {
-        const response = await authService.register({
-            email,
-            password,
-            name,
-            lastname,
-        });
-        const { user, accessToken, refreshToken } = response.data;
+        try {
+            const response = await authService.register({
+                email,
+                password,
+                name,
+                lastname,
+            });
 
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("refreshToken", refreshToken);
-        setUser(user);
+            // Si requiere verificación, retornar para que RegisterPage maneje la redirección
+            if (response.data.requiresVerification) {
+                return { requiresVerification: true };
+            }
+
+            // Si no requiere verificación, guardar tokens y usuario
+            const { user, accessToken, refreshToken } = response.data;
+            if (accessToken && refreshToken) {
+                localStorage.setItem("accessToken", accessToken);
+                localStorage.setItem("refreshToken", refreshToken);
+                setUser(user);
+            }
+        } catch (error) {
+            // Re-lanzar el error para que RegisterPage pueda manejarlo
+            throw error;
+        }
     };
 
     const logout = async () => {
