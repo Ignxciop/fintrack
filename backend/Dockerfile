@@ -1,59 +1,25 @@
-# Stage 1: Dependencies
-FROM node:20-alpine AS deps
+FROM node:20-alpine
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 
-# Instalar pnpm
-RUN npm install -g pnpm
+RUN addgroup -g 1001 -S nodejs && \
+	adduser -S nodejs -u 1001
 
-# Copiar archivos de dependencias
 COPY package.json pnpm-lock.yaml ./
-
-# Instalar dependencias
 RUN pnpm install --frozen-lockfile
 
-# Stage 2: Builder
-FROM node:20-alpine AS builder
-
-WORKDIR /app
-
-# Instalar pnpm
-RUN npm install -g pnpm
-
-# Copiar dependencias desde stage anterior
-COPY --from=deps /app/node_modules ./node_modules
-
-# Copiar código fuente
-COPY . .
-
-# Generar Prisma Client
+COPY prisma ./prisma/
 RUN pnpm prisma generate
 
-# Stage 3: Production
-FROM node:20-alpine AS production
+COPY --chown=nodejs:nodejs . .
 
-WORKDIR /app
+USER nodejs
 
-# Instalar pnpm
-RUN npm install -g pnpm
-
-# Copiar dependencias y código compilado
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/src ./src
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/index.js ./index.js
-
-# Exponer puerto
 EXPOSE 4006
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:4006/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Script de inicio que ejecuta migraciones antes de iniciar el servidor
-RUN echo '#!/bin/sh\nset -e\necho "Ejecutando migraciones de Prisma..."\npnpm prisma migrate deploy\necho "Iniciando servidor..."\nnode index.js' > /app/start.sh && \
-    chmod +x /app/start.sh
-
-# Comando para iniciar
-CMD ["/app/start.sh"]
+CMD ["sh", "-c", "pnpm prisma db push --accept-data-loss --skip-generate && pnpm start"]
