@@ -51,5 +51,9 @@ EXPOSE 4006
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:4006/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
+# Script de inicio que ejecuta migraciones antes de iniciar el servidor
+RUN echo '#!/bin/sh\nset -e\necho "Ejecutando migraciones de Prisma..."\npnpm prisma migrate deploy\necho "Iniciando servidor..."\nnode index.js' > /app/start.sh && \
+    chmod +x /app/start.sh
+
 # Comando para iniciar
-CMD ["node", "index.js"]
+CMD ["/app/start.sh"]
