@@ -6,13 +6,33 @@ export class AuthController {
             const deviceInfo = req.headers["user-agent"];
             const ipAddress = req.ip || req.connection.remoteAddress;
 
-            const { user, accessToken, refreshToken } =
-                await AuthService.register(req.body, deviceInfo, ipAddress);
+            const result = await AuthService.register(
+                req.body,
+                deviceInfo,
+                ipAddress,
+            );
 
+            // Si requiere verificación, no incluir tokens
+            if (result.requiresVerification) {
+                return res.status(201).json({
+                    success: true,
+                    message: "Usuario registrado. Por favor verifica tu email.",
+                    data: {
+                        user: result.user,
+                        requiresVerification: true,
+                    },
+                });
+            }
+
+            // En caso de que se agregue lógica sin verificación en el futuro
             res.status(201).json({
                 success: true,
                 message: "Usuario registrado exitosamente",
-                data: { user, accessToken, refreshToken },
+                data: {
+                    user: result.user,
+                    accessToken: result.accessToken,
+                    refreshToken: result.refreshToken,
+                },
             });
         } catch (error) {
             next(error);
@@ -121,6 +141,44 @@ export class AuthController {
             res.status(200).json({
                 success: true,
                 data: { sessions },
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    static async verifyEmail(req, res, next) {
+        try {
+            const { email, code } = req.body;
+            const deviceInfo = req.headers["user-agent"];
+            const ipAddress = req.ip || req.connection.remoteAddress;
+
+            const { user, accessToken, refreshToken } =
+                await AuthService.verifyEmail(
+                    email,
+                    code,
+                    deviceInfo,
+                    ipAddress,
+                );
+
+            res.status(200).json({
+                success: true,
+                message: "Email verificado exitosamente",
+                data: { user, accessToken, refreshToken },
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    static async resendVerification(req, res, next) {
+        try {
+            const { email } = req.body;
+            const result = await AuthService.resendVerification(email);
+
+            res.status(200).json({
+                success: true,
+                message: result.message,
             });
         } catch (error) {
             next(error);

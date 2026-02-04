@@ -29,6 +29,25 @@ export const loginValidator = [
     body("password").notEmpty().withMessage("La contraseña es requerida"),
 ];
 
+export const verifyEmailValidator = [
+    body("email")
+        .isEmail()
+        .withMessage("Debe proporcionar un email válido")
+        .normalizeEmail(),
+    body("code")
+        .isLength({ min: 6, max: 6 })
+        .withMessage("El código debe tener 6 dígitos")
+        .isNumeric()
+        .withMessage("El código debe ser numérico"),
+];
+
+export const resendVerificationValidator = [
+    body("email")
+        .isEmail()
+        .withMessage("Debe proporcionar un email válido")
+        .normalizeEmail(),
+];
+
 export const validate = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

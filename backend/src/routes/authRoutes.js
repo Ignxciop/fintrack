@@ -3,6 +3,8 @@ import { AuthController } from "../controllers/authController.js";
 import {
     registerValidator,
     loginValidator,
+    verifyEmailValidator,
+    resendVerificationValidator,
     validate,
 } from "../validators/authValidator.js";
 import { authenticate } from "../middlewares/auth.js";
@@ -14,6 +16,22 @@ router.post("/register", registerValidator, validate, AuthController.register);
 
 // POST /api/auth/login
 router.post("/login", loginValidator, validate, AuthController.login);
+
+// POST /api/auth/verify-email - Verificar email con código
+router.post(
+    "/verify-email",
+    verifyEmailValidator,
+    validate,
+    AuthController.verifyEmail,
+);
+
+// POST /api/auth/resend-verification - Reenviar código de verificación
+router.post(
+    "/resend-verification",
+    resendVerificationValidator,
+    validate,
+    AuthController.resendVerification,
+);
 
 // POST /api/auth/refresh - Renovar access token
 router.post("/refresh", AuthController.refresh);
