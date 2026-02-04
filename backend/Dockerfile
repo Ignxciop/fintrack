@@ -22,7 +22,4 @@ USER nodejs
 
 EXPOSE 4006
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=5 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:4006/health || exit 1
-
 CMD ["sh", "-c", "pnpm prisma db push --accept-data-loss --skip-generate && pnpm start"]

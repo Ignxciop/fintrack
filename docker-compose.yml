@@ -27,20 +27,6 @@ services:
         networks:
             - fintrack-network
             - default
-        healthcheck:
-            test:
-                [
-                    "CMD",
-                    "wget",
-                    "--no-verbose",
-                    "--tries=1",
-                    "--spider",
-                    "http://localhost:4006/health",
-                ]
-            interval: 30s
-            timeout: 10s
-            retries: 5
-            start_period: 40s
 
     frontend:
         build:
@@ -52,24 +38,9 @@ services:
         ports:
             - "4005:4005"
         depends_on:
-            backend:
-                condition: service_healthy
+            - backend
         networks:
             - fintrack-network
-        healthcheck:
-            test:
-                [
-                    "CMD",
-                    "wget",
-                    "--quiet",
-                    "--tries=1",
-                    "--spider",
-                    "http://localhost:4005",
-                ]
-            interval: 30s
-            timeout: 3s
-            retries: 3
-            start_period: 5s
 
     cloudflared:
         image: cloudflare/cloudflared:latest
