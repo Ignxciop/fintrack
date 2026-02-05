@@ -3,8 +3,15 @@ import { Prisma } from "@prisma/client";
 
 export class TransactionService {
     static async createTransaction(userId, transactionData) {
-        const { accountId, type, amount, categoryId, description, date } =
-            transactionData;
+        const {
+            accountId,
+            type,
+            amount,
+            categoryId,
+            description,
+            date,
+            destinationAccountId,
+        } = transactionData;
 
         const account = await prisma.account.findFirst({
             where: { id: accountId, userId, isActive: true },
@@ -22,6 +29,37 @@ export class TransactionService {
             throw error;
         }
 
+        // Validar cuenta destino para transferencias
+        if (type === "TRANSFER") {
+            if (!destinationAccountId) {
+                const error = new Error(
+                    "Cuenta destino requerida para transferencias",
+                );
+                error.statusCode = 400;
+                throw error;
+            }
+
+            const destinationAccount = await prisma.account.findFirst({
+                where: { id: destinationAccountId, userId, isActive: true },
+            });
+
+            if (!destinationAccount) {
+                const error = new Error(
+                    "Cuenta destino no encontrada o inactiva",
+                );
+                error.statusCode = 404;
+                throw error;
+            }
+
+            if (accountId === destinationAccountId) {
+                const error = new Error(
+                    "No puedes transferir a la misma cuenta",
+                );
+                error.statusCode = 400;
+                throw error;
+            }
+        }
+
         const balanceChange = this.calculateBalanceChange(
             account.type,
             type,
@@ -32,7 +70,7 @@ export class TransactionService {
         if (
             account.type !== "CREDIT" &&
             newBalance < 0 &&
-            type !== "ADJUSTMENT"
+            !type.startsWith("ADJUSTMENT")
         ) {
             const error = new Error(
                 "Saldo insuficiente para realizar esta operación",
@@ -41,6 +79,44 @@ export class TransactionService {
             throw error;
         }
 
+        // Para transferencias, crear transacción y actualizar ambas cuentas
+        if (type === "TRANSFER") {
+            const transaction = await prisma.$transaction(async (tx) => {
+                const newTransaction = await tx.transaction.create({
+                    data: {
+                        accountId,
+                        type,
+                        amount: new Prisma.Decimal(amount),
+                        categoryId,
+                        description,
+                        date: new Date(date),
+                        destinationAccountId,
+                    },
+                });
+
+                // Restar de cuenta origen
+                await tx.account.update({
+                    where: { id: accountId },
+                    data: { currentBalance: new Prisma.Decimal(newBalance) },
+                });
+
+                // Sumar a cuenta destino
+                await tx.account.update({
+                    where: { id: destinationAccountId },
+                    data: {
+                        currentBalance: {
+                            increment: new Prisma.Decimal(amount),
+                        },
+                    },
+                });
+
+                return newTransaction;
+            });
+
+            return transaction;
+        }
+
+        // Para otros tipos de transacciones
         const transaction = await prisma.transaction.create({
             data: {
                 accountId,
@@ -49,6 +125,7 @@ export class TransactionService {
                 categoryId,
                 description,
                 date: new Date(date),
+                destinationAccountId,
             },
         });
 
@@ -63,12 +140,33 @@ export class TransactionService {
     static calculateBalanceChange(accountType, transactionType, amount) {
         const numAmount = Number(amount);
 
+        // Para transferencias, siempre se resta de la cuenta origen
+        if (transactionType === "TRANSFER") {
+            return -numAmount;
+        }
+
+        // Para tarjetas de crédito
         if (accountType === "CREDIT") {
+            // Ajuste positivo: reduce la deuda (aumenta límite disponible)
+            if (transactionType === "ADJUSTMENT_POSITIVE") return -numAmount;
+            // Ajuste negativo: aumenta la deuda (reduce límite disponible)
+            if (transactionType === "ADJUSTMENT_NEGATIVE") return numAmount;
+            // Gasto: aumenta la deuda
             if (transactionType === "EXPENSE") return numAmount;
+            // Pago: reduce la deuda
             if (transactionType === "INCOME") return -numAmount;
             return 0;
         }
 
+        // Para cuentas normales (CASH, DEBIT, SAVINGS)
+        // Ajuste positivo: suma al saldo
+        if (transactionType === "ADJUSTMENT_POSITIVE") {
+            return numAmount;
+        }
+        // Ajuste negativo: resta del saldo
+        if (transactionType === "ADJUSTMENT_NEGATIVE") {
+            return -numAmount;
+        }
         if (transactionType === "INCOME") return numAmount;
         if (transactionType === "EXPENSE") return -numAmount;
         return 0;
@@ -146,6 +244,20 @@ export class TransactionService {
             userId,
         );
 
+        // No permitir cambiar tipo de transferencia a otro tipo o viceversa
+        if (updateData.type && updateData.type !== existingTransaction.type) {
+            if (
+                existingTransaction.type === "TRANSFER" ||
+                updateData.type === "TRANSFER"
+            ) {
+                const error = new Error(
+                    "No se puede cambiar el tipo de una transferencia",
+                );
+                error.statusCode = 400;
+                throw error;
+            }
+        }
+
         const oldBalanceChange = this.calculateBalanceChange(
             existingTransaction.account.type,
             existingTransaction.type,
@@ -163,6 +275,48 @@ export class TransactionService {
 
         const balanceDelta = newBalanceChange - oldBalanceChange;
 
+        // Si es transferencia, actualizar ambas cuentas
+        if (existingTransaction.type === "TRANSFER") {
+            const amountDelta =
+                Number(newAmount) - Number(existingTransaction.amount);
+
+            const [updatedTransaction] = await prisma.$transaction([
+                prisma.transaction.update({
+                    where: { id: transactionId },
+                    data: {
+                        amount: newAmount
+                            ? new Prisma.Decimal(newAmount)
+                            : undefined,
+                        description: updateData.description,
+                        date: updateData.date
+                            ? new Date(updateData.date)
+                            : undefined,
+                    },
+                }),
+                // Actualizar cuenta origen
+                prisma.account.update({
+                    where: { id: existingTransaction.accountId },
+                    data: {
+                        currentBalance: {
+                            decrement: new Prisma.Decimal(amountDelta),
+                        },
+                    },
+                }),
+                // Actualizar cuenta destino
+                prisma.account.update({
+                    where: { id: existingTransaction.destinationAccountId },
+                    data: {
+                        currentBalance: {
+                            increment: new Prisma.Decimal(amountDelta),
+                        },
+                    },
+                }),
+            ]);
+
+            return updatedTransaction;
+        }
+
+        // Para otros tipos de transacciones
         const [updatedTransaction] = await prisma.$transaction([
             prisma.transaction.update({
                 where: { id: transactionId },
@@ -203,19 +357,50 @@ export class TransactionService {
             transaction.amount,
         );
 
-        await prisma.$transaction([
-            prisma.transaction.delete({
-                where: { id: transactionId },
-            }),
-            prisma.account.update({
-                where: { id: transaction.accountId },
-                data: {
-                    currentBalance: {
-                        increment: new Prisma.Decimal(-balanceChange),
+        // Si es transferencia, revertir en ambas cuentas
+        if (
+            transaction.type === "TRANSFER" &&
+            transaction.destinationAccountId
+        ) {
+            await prisma.$transaction([
+                prisma.transaction.delete({
+                    where: { id: transactionId },
+                }),
+                // Revertir en cuenta origen (sumar porque se había restado)
+                prisma.account.update({
+                    where: { id: transaction.accountId },
+                    data: {
+                        currentBalance: {
+                            increment: new Prisma.Decimal(-balanceChange),
+                        },
                     },
-                },
-            }),
-        ]);
+                }),
+                // Revertir en cuenta destino (restar porque se había sumado)
+                prisma.account.update({
+                    where: { id: transaction.destinationAccountId },
+                    data: {
+                        currentBalance: {
+                            decrement: new Prisma.Decimal(transaction.amount),
+                        },
+                    },
+                }),
+            ]);
+        } else {
+            // Para otros tipos de transacciones
+            await prisma.$transaction([
+                prisma.transaction.delete({
+                    where: { id: transactionId },
+                }),
+                prisma.account.update({
+                    where: { id: transaction.accountId },
+                    data: {
+                        currentBalance: {
+                            increment: new Prisma.Decimal(-balanceChange),
+                        },
+                    },
+                }),
+            ]);
+        }
 
         return { message: "Movimiento eliminado correctamente" };
     }

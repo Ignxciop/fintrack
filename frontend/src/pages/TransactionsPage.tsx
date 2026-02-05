@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Filter } from "lucide-react";
+import { Plus, Filter, Eye, EyeOff } from "lucide-react";
 import { Button } from "../components/ui/button";
 import {
     Card,
@@ -34,14 +34,19 @@ import logger from "../lib/logger";
 const TRANSACTION_TYPE_LABELS = {
     INCOME: "Ingreso",
     EXPENSE: "Gasto",
-    ADJUSTMENT: "Ajuste",
+    ADJUSTMENT_POSITIVE: "Ajuste +",
+    ADJUSTMENT_NEGATIVE: "Ajuste -",
+    TRANSFER: "Transferencia",
 };
 
 const TRANSACTION_TYPE_COLORS = {
     INCOME: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200",
     EXPENSE: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200",
-    ADJUSTMENT:
-        "bg-yellow-100 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-200",
+    ADJUSTMENT_POSITIVE:
+        "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200",
+    ADJUSTMENT_NEGATIVE:
+        "bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-200",
+    TRANSFER: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
 };
 
 export default function TransactionsPage() {
@@ -53,6 +58,16 @@ export default function TransactionsPage() {
     const [transactionToDelete, setTransactionToDelete] = useState<
         string | null
     >(null);
+    const [hideBalances, setHideBalances] = useState(() => {
+        const saved = localStorage.getItem("hideBalances");
+        return saved === "true";
+    });
+
+    const toggleBalances = () => {
+        const newValue = !hideBalances;
+        setHideBalances(newValue);
+        localStorage.setItem("hideBalances", String(newValue));
+    };
 
     const loadTransactions = async () => {
         try {
@@ -101,6 +116,9 @@ export default function TransactionsPage() {
     };
 
     const formatCurrency = (amount: string, currency: string) => {
+        if (hideBalances) {
+            return `${currency} ••••••`;
+        }
         const value = parseFloat(amount);
         return `${currency} ${value.toLocaleString("es-CL", {
             minimumFractionDigits: 0,
@@ -109,7 +127,14 @@ export default function TransactionsPage() {
     };
 
     const formatDate = (date: string) => {
-        return new Date(date).toLocaleDateString("es-CL", {
+        // Parsear la fecha como local, no UTC
+        const [year, month, day] = date.split("T")[0].split("-");
+        const localDate = new Date(
+            parseInt(year),
+            parseInt(month) - 1,
+            parseInt(day),
+        );
+        return localDate.toLocaleDateString("es-CL", {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
@@ -136,6 +161,21 @@ export default function TransactionsPage() {
                     </p>
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={toggleBalances}
+                        title={
+                            hideBalances ? "Mostrar montos" : "Ocultar montos"
+                        }
+                        className="flex-shrink-0"
+                    >
+                        {hideBalances ? (
+                            <EyeOff className="h-4 w-4" />
+                        ) : (
+                            <Eye className="h-4 w-4" />
+                        )}
+                    </Button>
                     <Button
                         variant="outline"
                         size="sm"
@@ -174,74 +214,78 @@ export default function TransactionsPage() {
                     </CardContent>
                 </Card>
             ) : (
-                <div className="space-y-3">
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                     {transactions.map((transaction) => (
                         <Card
                             key={transaction.id}
-                            className="hover:shadow-md transition-shadow dark:bg-slate-900/50 dark:border-blue-900/30"
+                            className="hover:shadow-lg transition-shadow dark:bg-slate-900/50 dark:border-blue-900/30"
                         >
-                            <CardHeader className="pb-3">
-                                <div className="flex justify-between items-start gap-3">
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <CardTitle className="text-base sm:text-lg dark:text-gray-100 truncate">
-                                                {transaction.account?.name}
-                                            </CardTitle>
-                                            <Badge
-                                                className={
-                                                    TRANSACTION_TYPE_COLORS[
-                                                        transaction.type
-                                                    ]
-                                                }
-                                            >
-                                                {
-                                                    TRANSACTION_TYPE_LABELS[
-                                                        transaction.type
-                                                    ]
-                                                }
-                                            </Badge>
-                                        </div>
-                                        {transaction.description && (
-                                            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">
-                                                {transaction.description}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div className="text-right flex-shrink-0">
-                                        <p
-                                            className={`text-lg sm:text-xl font-bold ${
-                                                transaction.type === "INCOME"
-                                                    ? "text-green-600 dark:text-green-400"
-                                                    : transaction.type ===
-                                                        "EXPENSE"
-                                                      ? "text-red-600 dark:text-red-400"
-                                                      : "text-yellow-600 dark:text-yellow-400"
-                                            }`}
+                            <CardHeader className="pb-2">
+                                <div className="space-y-2">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <CardTitle className="text-base dark:text-gray-100 truncate flex-1">
+                                            {transaction.account?.name}
+                                        </CardTitle>
+                                        <Badge
+                                            className={
+                                                TRANSACTION_TYPE_COLORS[
+                                                    transaction.type
+                                                ]
+                                            }
                                         >
-                                            {transaction.type === "INCOME"
-                                                ? "+"
-                                                : transaction.type === "EXPENSE"
-                                                  ? "-"
-                                                  : ""}
-                                            {formatCurrency(
-                                                transaction.amount,
-                                                transaction.account?.currency ||
-                                                    "CLP",
-                                            )}
-                                        </p>
-                                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                                            {formatDate(transaction.date)}
-                                        </p>
+                                            {
+                                                TRANSACTION_TYPE_LABELS[
+                                                    transaction.type
+                                                ]
+                                            }
+                                        </Badge>
                                     </div>
+                                    <p
+                                        className={`text-xl font-bold ${
+                                            transaction.type === "INCOME" ||
+                                            transaction.type ===
+                                                "ADJUSTMENT_POSITIVE"
+                                                ? "text-green-600 dark:text-green-400"
+                                                : transaction.type ===
+                                                        "EXPENSE" ||
+                                                    transaction.type ===
+                                                        "ADJUSTMENT_NEGATIVE"
+                                                  ? "text-red-600 dark:text-red-400"
+                                                  : "text-blue-600 dark:text-blue-400"
+                                        }`}
+                                    >
+                                        {transaction.type === "INCOME" ||
+                                        transaction.type ===
+                                            "ADJUSTMENT_POSITIVE"
+                                            ? "+"
+                                            : transaction.type === "EXPENSE" ||
+                                                transaction.type ===
+                                                    "ADJUSTMENT_NEGATIVE"
+                                              ? "-"
+                                              : ""}
+                                        {formatCurrency(
+                                            transaction.amount,
+                                            transaction.account?.currency ||
+                                                "CLP",
+                                        )}
+                                    </p>
+                                    {transaction.description && (
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                                            {transaction.description}
+                                        </p>
+                                    )}
+                                    <p className="text-xs text-gray-500 dark:text-gray-500">
+                                        {formatDate(transaction.date)}
+                                    </p>
                                 </div>
                             </CardHeader>
-                            <CardContent className="pt-0">
+                            <CardContent className="pt-2">
                                 <div className="flex gap-2">
                                     <Button
                                         variant="outline"
                                         size="sm"
                                         onClick={() => handleEdit(transaction)}
-                                        className="flex-1 text-xs sm:text-sm"
+                                        className="flex-1 text-xs"
                                     >
                                         Editar
                                     </Button>
@@ -251,7 +295,7 @@ export default function TransactionsPage() {
                                         onClick={() =>
                                             handleDelete(transaction.id)
                                         }
-                                        className="flex-1 text-xs sm:text-sm text-red-600 hover:text-red-700 dark:text-red-400"
+                                        className="flex-1 text-xs text-red-600 hover:text-red-700 dark:text-red-400"
                                     >
                                         Eliminar
                                     </Button>

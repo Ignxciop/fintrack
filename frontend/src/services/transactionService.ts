@@ -3,11 +3,17 @@ import api from "../lib/api";
 export interface Transaction {
     id: string;
     accountId: string;
-    type: "INCOME" | "EXPENSE" | "ADJUSTMENT";
+    type:
+        | "INCOME"
+        | "EXPENSE"
+        | "ADJUSTMENT_POSITIVE"
+        | "ADJUSTMENT_NEGATIVE"
+        | "TRANSFER";
     amount: string;
     categoryId?: string;
     description?: string;
     date: string;
+    destinationAccountId?: string;
     createdAt: string;
     updatedAt: string;
     account?: {
@@ -20,15 +26,26 @@ export interface Transaction {
 
 export interface CreateTransactionData {
     accountId: string;
-    type: "INCOME" | "EXPENSE" | "ADJUSTMENT";
+    type:
+        | "INCOME"
+        | "EXPENSE"
+        | "ADJUSTMENT_POSITIVE"
+        | "ADJUSTMENT_NEGATIVE"
+        | "TRANSFER";
     amount: number;
     categoryId?: string;
     description?: string;
     date: string;
+    destinationAccountId?: string;
 }
 
 export interface UpdateTransactionData {
-    type?: "INCOME" | "EXPENSE" | "ADJUSTMENT";
+    type?:
+        | "INCOME"
+        | "EXPENSE"
+        | "ADJUSTMENT_POSITIVE"
+        | "ADJUSTMENT_NEGATIVE"
+        | "TRANSFER";
     amount?: number;
     categoryId?: string;
     description?: string;
@@ -37,7 +54,12 @@ export interface UpdateTransactionData {
 
 export interface TransactionFilters {
     accountId?: string;
-    type?: "INCOME" | "EXPENSE" | "ADJUSTMENT";
+    type?:
+        | "INCOME"
+        | "EXPENSE"
+        | "ADJUSTMENT_POSITIVE"
+        | "ADJUSTMENT_NEGATIVE"
+        | "TRANSFER";
     startDate?: string;
     endDate?: string;
     limit?: number;

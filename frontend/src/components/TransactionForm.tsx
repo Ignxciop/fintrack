@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { Plus } from "lucide-react";
 import {
     Select,
     SelectContent,
@@ -15,6 +16,7 @@ import transactionService, {
     type UpdateTransactionData,
 } from "../services/transactionService";
 import accountService, { type Account } from "../services/accountService";
+import categoryService, { type Category } from "../services/categoryService";
 import logger from "../lib/logger";
 
 const ACCOUNT_TYPE_LABELS: Record<string, string> = {
@@ -22,6 +24,41 @@ const ACCOUNT_TYPE_LABELS: Record<string, string> = {
     DEBIT: "Débito",
     CREDIT: "Crédito",
     SAVINGS: "Ahorros",
+};
+
+const TYPE_DESCRIPTIONS: Record<
+    string,
+    { label: string; tip: string; creditLabel?: string; creditTip?: string }
+> = {
+    INCOME: {
+        label: "Ingreso",
+        tip: "Registra dinero que entra a tu cuenta",
+        creditLabel: "Pago",
+        creditTip: "Registra un pago a la tarjeta (reduce la deuda)",
+    },
+    EXPENSE: {
+        label: "Gasto",
+        tip: "Registra dinero que sale de tu cuenta",
+        creditLabel: "Compra / Gasto",
+        creditTip:
+            "Registra una compra o gasto con la tarjeta (aumenta la deuda)",
+    },
+    ADJUSTMENT_POSITIVE: {
+        label: "Ajuste Positivo",
+        tip: "Suma un monto al saldo (correcciones, dinero encontrado, etc.)",
+        creditTip:
+            "Reduce la deuda / Aumenta el límite disponible (ajustes, bonificaciones, etc.)",
+    },
+    ADJUSTMENT_NEGATIVE: {
+        label: "Ajuste Negativo",
+        tip: "Resta un monto del saldo (correcciones, dinero faltante, comisiones, etc.)",
+        creditTip:
+            "Aumenta la deuda / Reduce el límite disponible (comisiones, cargos, etc.)",
+    },
+    TRANSFER: {
+        label: "Transferencia",
+        tip: "Mueve dinero de una cuenta a otra de tus cuentas",
+    },
 };
 
 interface TransactionFormProps {
@@ -36,22 +73,34 @@ export default function TransactionForm({
     onCancel,
 }: TransactionFormProps) {
     const [accounts, setAccounts] = useState<Account[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
     const [selectedAccount, setSelectedAccount] = useState<Account | null>(
         null,
     );
     const [formData, setFormData] = useState({
         accountId: "",
-        type: "EXPENSE" as "INCOME" | "EXPENSE" | "ADJUSTMENT",
+        type: "" as
+            | ""
+            | "INCOME"
+            | "EXPENSE"
+            | "ADJUSTMENT_POSITIVE"
+            | "ADJUSTMENT_NEGATIVE"
+            | "TRANSFER",
         amount: "",
         description: "",
         date: new Date().toISOString().split("T")[0],
+        destinationAccountId: "",
+        categoryId: "",
     });
     const [loading, setLoading] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState("");
+    const [showNewCategory, setShowNewCategory] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     // Cargar cuentas al montar
     useEffect(() => {
         loadAccounts();
+        loadCategories();
     }, []);
 
     // Sincronizar formData con transaction cuando cambia
@@ -63,6 +112,8 @@ export default function TransactionForm({
                 amount: transaction.amount,
                 description: transaction.description || "",
                 date: new Date(transaction.date).toISOString().split("T")[0],
+                destinationAccountId: transaction.destinationAccountId || "",
+                categoryId: transaction.categoryId || "",
             };
             setFormData(newFormData);
 
@@ -76,10 +127,12 @@ export default function TransactionForm({
         } else {
             setFormData({
                 accountId: "",
-                type: "EXPENSE",
+                type: "",
                 amount: "",
                 description: "",
                 date: new Date().toISOString().split("T")[0],
+                destinationAccountId: "",
+                categoryId: "",
             });
             setSelectedAccount(null);
         }
@@ -104,31 +157,61 @@ export default function TransactionForm({
         }
     };
 
-    const getTypeLabel = (type: string) => {
-        if (!selectedAccount) return type;
+    const loadCategories = async () => {
+        try {
+            const data = await categoryService.getCategories();
+            setCategories(data);
+        } catch (error) {
+            logger.error("Error al cargar categorías:", error);
+        }
+    };
 
-        if (selectedAccount.type === "CREDIT") {
-            if (type === "EXPENSE") return "Compra / Gasto";
-            if (type === "INCOME") return "Pago";
+    const handleAddCategory = async () => {
+        if (!newCategoryName.trim()) return;
+
+        try {
+            const newCategory = await categoryService.createCategory(
+                newCategoryName.trim(),
+            );
+            setCategories([...categories, newCategory]);
+            setFormData({ ...formData, categoryId: newCategory.id });
+            setNewCategoryName("");
+            setShowNewCategory(false);
+        } catch (error: any) {
+            logger.error("Error al crear categoría:", error);
+            setErrors({
+                ...errors,
+                category:
+                    error.response?.data?.error ||
+                    "Error al crear la categoría",
+            });
+        }
+    };
+
+    const getTypeLabel = (type: string) => {
+        if (!selectedAccount) return TYPE_DESCRIPTIONS[type]?.label || type;
+
+        if (
+            selectedAccount.type === "CREDIT" &&
+            TYPE_DESCRIPTIONS[type]?.creditLabel
+        ) {
+            return TYPE_DESCRIPTIONS[type].creditLabel!;
         }
 
-        return type === "INCOME"
-            ? "Ingreso"
-            : type === "EXPENSE"
-              ? "Gasto"
-              : "Ajuste";
+        return TYPE_DESCRIPTIONS[type]?.label || type;
     };
 
     const getTypeDescription = () => {
-        if (!selectedAccount || selectedAccount.type !== "CREDIT") return null;
+        if (!formData.type) return null;
 
-        if (formData.type === "EXPENSE") {
-            return "Registra una compra o gasto con la tarjeta (aumenta la deuda)";
+        const typeInfo = TYPE_DESCRIPTIONS[formData.type];
+        if (!typeInfo) return null;
+
+        if (selectedAccount?.type === "CREDIT" && typeInfo.creditTip) {
+            return typeInfo.creditTip;
         }
-        if (formData.type === "INCOME") {
-            return "Registra un pago a la tarjeta (reduce la deuda)";
-        }
-        return null;
+
+        return typeInfo.tip;
     };
 
     const validate = (): boolean => {
@@ -136,6 +219,31 @@ export default function TransactionForm({
 
         if (!formData.accountId) {
             newErrors.accountId = "Debes seleccionar una cuenta";
+        }
+
+        if (!formData.type) {
+            newErrors.type = "Debes seleccionar un tipo de movimiento";
+        }
+
+        if (
+            (formData.type === "INCOME" || formData.type === "EXPENSE") &&
+            !formData.categoryId
+        ) {
+            newErrors.categoryId =
+                "La categoría es obligatoria para ingresos y gastos";
+        }
+
+        if (formData.type === "TRANSFER" && !formData.destinationAccountId) {
+            newErrors.destinationAccountId =
+                "Debes seleccionar una cuenta destino";
+        }
+
+        if (
+            formData.type === "TRANSFER" &&
+            formData.accountId === formData.destinationAccountId
+        ) {
+            newErrors.destinationAccountId =
+                "No puedes transferir a la misma cuenta";
         }
 
         if (!formData.amount) {
@@ -165,7 +273,7 @@ export default function TransactionForm({
 
             if (transaction) {
                 const updateData: UpdateTransactionData = {
-                    type: formData.type,
+                    ...(formData.type && { type: formData.type }),
                     amount: parseFloat(formData.amount),
                     description: formData.description || undefined,
                     date: formData.date,
@@ -178,10 +286,18 @@ export default function TransactionForm({
             } else {
                 const createData: CreateTransactionData = {
                     accountId: formData.accountId,
-                    type: formData.type,
+                    type: formData.type as Exclude<typeof formData.type, "">,
                     amount: parseFloat(formData.amount),
                     description: formData.description || undefined,
                     date: formData.date,
+                    destinationAccountId:
+                        formData.type === "TRANSFER"
+                            ? formData.destinationAccountId
+                            : undefined,
+                    categoryId:
+                        formData.categoryId && formData.categoryId !== "none"
+                            ? formData.categoryId
+                            : undefined,
                 };
 
                 await transactionService.createTransaction(createData);
@@ -200,6 +316,11 @@ export default function TransactionForm({
         }
     };
 
+    const availableDestinationAccounts = accounts.filter(
+        (account) =>
+            account.id !== formData.accountId && account.type !== "CREDIT",
+    );
+
     return (
         <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
             <div className="space-y-1.5 sm:space-y-2">
@@ -207,7 +328,7 @@ export default function TransactionForm({
                     htmlFor="accountId"
                     className="dark:text-gray-200 text-sm"
                 >
-                    Cuenta
+                    Cuenta {formData.type === "TRANSFER" ? "Origen" : ""}
                 </Label>
                 <Select
                     value={formData.accountId || ""}
@@ -215,7 +336,7 @@ export default function TransactionForm({
                         setFormData({ ...formData, accountId: value })
                     }
                 >
-                    <SelectTrigger className="dark:bg-slate-800/50 dark:border-blue-900/30 dark:text-gray-100 text-base h-11">
+                    <SelectTrigger className="dark:bg-slate-800 dark:border-blue-900/50 dark:text-gray-100 text-base h-11">
                         <SelectValue placeholder="Selecciona una cuenta">
                             {formData.accountId && accounts.length > 0
                                 ? (() => {
@@ -229,7 +350,7 @@ export default function TransactionForm({
                                 : null}
                         </SelectValue>
                     </SelectTrigger>
-                    <SelectContent className="dark:bg-slate-800/50 dark:border-blue-900/30">
+                    <SelectContent className="dark:bg-slate-800 dark:border-blue-900/50">
                         {accounts.map((account) => (
                             <SelectItem key={account.id} value={account.id}>
                                 {account.name} (
@@ -252,11 +373,15 @@ export default function TransactionForm({
                 <Select
                     value={formData.type}
                     onValueChange={(value: any) =>
-                        setFormData({ ...formData, type: value })
+                        setFormData({
+                            ...formData,
+                            type: value,
+                            destinationAccountId: "",
+                        })
                     }
                     disabled={!formData.accountId}
                 >
-                    <SelectTrigger className="dark:bg-slate-800/50 dark:border-blue-900/30 dark:text-gray-100 text-base h-11">
+                    <SelectTrigger className="dark:bg-slate-800 dark:border-blue-900/50 dark:text-gray-100 text-base h-11">
                         <SelectValue
                             placeholder={
                                 !formData.accountId
@@ -269,14 +394,24 @@ export default function TransactionForm({
                                 : null}
                         </SelectValue>
                     </SelectTrigger>
-                    <SelectContent className="dark:bg-slate-800/50 dark:border-blue-900/30">
+                    <SelectContent className="dark:bg-slate-800 dark:border-blue-900/50">
                         <SelectItem value="INCOME">
                             {getTypeLabel("INCOME")}
                         </SelectItem>
                         <SelectItem value="EXPENSE">
                             {getTypeLabel("EXPENSE")}
                         </SelectItem>
-                        <SelectItem value="ADJUSTMENT">Ajuste</SelectItem>
+                        <SelectItem value="ADJUSTMENT_POSITIVE">
+                            {getTypeLabel("ADJUSTMENT_POSITIVE")}
+                        </SelectItem>
+                        <SelectItem value="ADJUSTMENT_NEGATIVE">
+                            {getTypeLabel("ADJUSTMENT_NEGATIVE")}
+                        </SelectItem>
+                        {selectedAccount?.type !== "CREDIT" && (
+                            <SelectItem value="TRANSFER">
+                                {getTypeLabel("TRANSFER")}
+                            </SelectItem>
+                        )}
                     </SelectContent>
                 </Select>
                 {getTypeDescription() && (
@@ -285,7 +420,136 @@ export default function TransactionForm({
                     </p>
                 )}
             </div>
-
+            {formData.type &&
+                (formData.type === "INCOME" || formData.type === "EXPENSE") && (
+                    <div className="space-y-1.5 sm:space-y-2">
+                        <Label
+                            htmlFor="categoryId"
+                            className="dark:text-gray-200 text-sm"
+                        >
+                            Categoría
+                        </Label>
+                        <div className="flex gap-2">
+                            <Select
+                                value={formData.categoryId || ""}
+                                onValueChange={(value) =>
+                                    setFormData({
+                                        ...formData,
+                                        categoryId: value,
+                                    })
+                                }
+                            >
+                                <SelectTrigger className="dark:bg-slate-800 dark:border-blue-900/50 dark:text-gray-100 text-base h-11 flex-1">
+                                    <SelectValue placeholder="Sin categoría" />
+                                </SelectTrigger>
+                                <SelectContent className="dark:bg-slate-800 dark:border-blue-900/50">
+                                    <SelectItem value="none">
+                                        Sin categoría
+                                    </SelectItem>
+                                    {categories.map((category) => (
+                                        <SelectItem
+                                            key={category.id}
+                                            value={category.id}
+                                        >
+                                            {category.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() =>
+                                    setShowNewCategory(!showNewCategory)
+                                }
+                                className="h-11 w-11 flex-shrink-0"
+                            >
+                                <Plus className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        {showNewCategory && (
+                            <div className="flex gap-2 mt-2">
+                                <Input
+                                    value={newCategoryName}
+                                    onChange={(e) =>
+                                        setNewCategoryName(e.target.value)
+                                    }
+                                    placeholder="Nombre de la categoría"
+                                    className="dark:bg-slate-800 dark:border-blue-900/50 dark:text-gray-100 text-base"
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            handleAddCategory();
+                                        }
+                                    }}
+                                />
+                                <Button
+                                    type="button"
+                                    onClick={handleAddCategory}
+                                    size="sm"
+                                >
+                                    Agregar
+                                </Button>
+                            </div>
+                        )}
+                        {(errors.categoryId || errors.category) && (
+                            <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">
+                                {errors.categoryId || errors.category}
+                            </p>
+                        )}
+                    </div>
+                )}
+            {formData.type === "TRANSFER" && (
+                <div className="space-y-1.5 sm:space-y-2">
+                    <Label
+                        htmlFor="destinationAccountId"
+                        className="dark:text-gray-200 text-sm"
+                    >
+                        Cuenta Destino
+                    </Label>
+                    <Select
+                        value={formData.destinationAccountId || ""}
+                        onValueChange={(value) =>
+                            setFormData({
+                                ...formData,
+                                destinationAccountId: value,
+                            })
+                        }
+                    >
+                        <SelectTrigger className="dark:bg-slate-800 dark:border-blue-900/50 dark:text-gray-100 text-base h-11">
+                            <SelectValue placeholder="Selecciona cuenta destino">
+                                {formData.destinationAccountId &&
+                                accounts.length > 0
+                                    ? (() => {
+                                          const account = accounts.find(
+                                              (a) =>
+                                                  a.id ===
+                                                  formData.destinationAccountId,
+                                          );
+                                          return account
+                                              ? `${account.name} (${ACCOUNT_TYPE_LABELS[account.type]})`
+                                              : "Selecciona cuenta destino";
+                                      })()
+                                    : null}
+                            </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent className="dark:bg-slate-800 dark:border-blue-900/50">
+                            {availableDestinationAccounts.map((account) => (
+                                <SelectItem key={account.id} value={account.id}>
+                                    {account.name} (
+                                    {ACCOUNT_TYPE_LABELS[account.type]})
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    {errors.destinationAccountId && (
+                        <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">
+                            {errors.destinationAccountId}
+                        </p>
+                    )}
+                </div>
+            )}
             <div className="space-y-1.5 sm:space-y-2">
                 <Label htmlFor="amount" className="dark:text-gray-200 text-sm">
                     Monto
@@ -299,7 +563,7 @@ export default function TransactionForm({
                         setFormData({ ...formData, amount: e.target.value })
                     }
                     placeholder="0"
-                    className="dark:bg-slate-800/50 dark:border-blue-900/30 dark:text-gray-100 text-base"
+                    className="dark:bg-slate-800 dark:border-blue-900/50 dark:text-gray-100 text-base"
                 />
                 {errors.amount && (
                     <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">
@@ -319,7 +583,7 @@ export default function TransactionForm({
                     onChange={(e) =>
                         setFormData({ ...formData, date: e.target.value })
                     }
-                    className="dark:bg-slate-800/50 dark:border-blue-900/30 dark:text-gray-100 text-base"
+                    className="dark:bg-slate-800 dark:border-blue-900/50 dark:text-gray-100 text-base"
                 />
                 {errors.date && (
                     <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">
@@ -345,7 +609,7 @@ export default function TransactionForm({
                         })
                     }
                     placeholder="Ej: Supermercado, Gasolina, etc."
-                    className="dark:bg-slate-800/50 dark:border-blue-900/30 dark:text-gray-100 text-base"
+                    className="dark:bg-slate-800 dark:border-blue-900/50 dark:text-gray-100 text-base"
                 />
             </div>
 
