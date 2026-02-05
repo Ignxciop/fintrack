@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Eye, EyeOff } from "lucide-react";
 import { Button } from "../components/ui/button";
 import {
     Card,
@@ -52,6 +52,16 @@ export default function AccountsPage() {
         null,
     );
     const [accountToDelete, setAccountToDelete] = useState<string | null>(null);
+    const [hideBalances, setHideBalances] = useState(() => {
+        const saved = localStorage.getItem("hideBalances");
+        return saved === "true";
+    });
+
+    const toggleBalances = () => {
+        const newValue = !hideBalances;
+        setHideBalances(newValue);
+        localStorage.setItem("hideBalances", String(newValue));
+    };
 
     const loadAccounts = async () => {
         try {
@@ -98,6 +108,9 @@ export default function AccountsPage() {
     };
 
     const formatCurrency = (amount: string, currency: string) => {
+        if (hideBalances) {
+            return `${currency} ••••••`;
+        }
         const value = parseFloat(amount);
         return `${currency} ${value.toLocaleString("es-CL", {
             minimumFractionDigits: 0,
@@ -114,25 +127,44 @@ export default function AccountsPage() {
     }
 
     return (
-        <div className="p-6 space-y-6">
-            <div className="flex justify-between items-center">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
                         Cuentas
                     </h1>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
                         Administra tus cuentas bancarias y tarjetas
                     </p>
                 </div>
-                <Button
-                    onClick={() => {
-                        setSelectedAccount(null);
-                        setIsDialogOpen(true);
-                    }}
-                >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Nueva Cuenta
-                </Button>
+                <div className="flex gap-2 w-full sm:w-auto">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={toggleBalances}
+                        title={
+                            hideBalances ? "Mostrar saldos" : "Ocultar saldos"
+                        }
+                        className="flex-shrink-0"
+                    >
+                        {hideBalances ? (
+                            <EyeOff className="h-4 w-4" />
+                        ) : (
+                            <Eye className="h-4 w-4" />
+                        )}
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            setSelectedAccount(null);
+                            setIsDialogOpen(true);
+                        }}
+                        size="sm"
+                        className="flex-1 sm:flex-none"
+                    >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Nueva Cuenta
+                    </Button>
+                </div>
             </div>
 
             {accounts.length === 0 ? (
