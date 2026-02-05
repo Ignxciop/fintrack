@@ -8,32 +8,35 @@ datasource db {
 }
 
 model User {
-  id                 String              @id @default(uuid())
-  email              String              @unique
-  password           String
-  name               String
-  lastname           String
-  isVerified         Boolean             @default(false)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  refreshTokens      RefreshToken[]
-  verificationCodes  VerificationCode[]
-  accounts           Account[]
+  id                String             @id @default(uuid())
+  email             String             @unique
+  password          String
+  name              String
+  lastname          String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  isVerified        Boolean            @default(false)
+  accounts          Account[]
+  categories        Category[]
+  recurrings        Recurring[]
+  budgets           Budget[]
+  refreshTokens     RefreshToken[]
+  verificationCodes VerificationCode[]
 
   @@map("users")
 }
 
 model RefreshToken {
-  id           String   @id @default(uuid())
-  token        String   @unique
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt    DateTime
-  createdAt    DateTime @default(now())
-  isRevoked    Boolean  @default(false)
-  replacedBy   String?
-  deviceInfo   String?
-  ipAddress    String?
+  id         String   @id @default(uuid())
+  token      String   @unique
+  userId     String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  isRevoked  Boolean  @default(false)
+  replacedBy String?
+  deviceInfo String?
+  ipAddress  String?
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([token])
@@ -44,14 +47,74 @@ model VerificationCode {
   id        String   @id @default(uuid())
   code      String
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
   isUsed    Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([code])
   @@map("verification_codes")
+}
+
+model Account {
+  id             String        @id @default(uuid())
+  name           String
+  type           AccountType
+  initialBalance Decimal       @db.Decimal(15, 2)
+  currentBalance Decimal       @db.Decimal(15, 2)
+  currency       String        @default("CLP")
+  creditLimit    Decimal?      @db.Decimal(15, 2)
+  billingDay     Int?
+  paymentDueDay  Int?
+  isActive       Boolean       @default(true)
+  userId         String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions   Transaction[]
+  recurrings     Recurring[]
+  budgets        Budget[]
+
+  @@index([userId])
+  @@index([type])
+  @@map("accounts")
+}
+
+model Category {
+  id           String        @id @default(uuid())
+  name         String
+  userId       String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  recurrings   Recurring[]
+  budgets      Budget[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("categories")
+}
+
+model Transaction {
+  id                   String          @id @default(uuid())
+  accountId            String
+  type                 TransactionType
+  amount               Decimal         @db.Decimal(15, 2)
+  categoryId           String?
+  category             Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  description          String?
+  date                 DateTime
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  destinationAccountId String?
+  account              Account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([type])
+  @@index([date])
+  @@map("transactions")
 }
 
 enum AccountType {
@@ -64,45 +127,67 @@ enum AccountType {
 enum TransactionType {
   INCOME
   EXPENSE
-  ADJUSTMENT
+  ADJUSTMENT_POSITIVE
+  ADJUSTMENT_NEGATIVE
+  TRANSFER
 }
 
-model Account {
-  id              String      @id @default(uuid())
-  name            String
-  type            AccountType
-  initialBalance  Decimal     @db.Decimal(15, 2)
-  currentBalance  Decimal     @db.Decimal(15, 2)
-  currency        String      @default("CLP")
-  creditLimit     Decimal?    @db.Decimal(15, 2)
-  billingDay      Int?
-  paymentDueDay   Int?
-  isActive        Boolean     @default(true)
-  userId          String
-  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions    Transaction[]
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+enum RecurringFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum BudgetPeriod {
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+model Recurring {
+  id            String              @id @default(uuid())
+  userId        String
+  accountId     String
+  type          TransactionType
+  amount        Decimal             @db.Decimal(15, 2)
+  categoryId    String?
+  description   String?
+  frequency     RecurringFrequency
+  interval      Int                 @default(1)
+  startDate     DateTime
+  endDate       DateTime?
+  lastExecutedAt DateTime?
+  isActive      Boolean             @default(true)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account       Account             @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category      Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   @@index([userId])
-  @@index([type])
-  @@map("accounts")
+  @@index([accountId])
+  @@index([isActive])
+  @@map("recurrings")
 }
 
-model Transaction {
-  id          String          @id @default(uuid())
-  accountId   String
-  account     Account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  type        TransactionType
-  amount      Decimal         @db.Decimal(15, 2)
-  categoryId  String?
-  description String?
-  date        DateTime
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+model Budget {
+  id         String       @id @default(uuid())
+  userId     String
+  name       String
+  amount     Decimal      @db.Decimal(15, 2)
+  period     BudgetPeriod
+  categoryId String?
+  accountId  String?
+  startDate  DateTime
+  isActive   Boolean      @default(true)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category   Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  account    Account?     @relation(fields: [accountId], references: [id], onDelete: SetNull)
 
-  @@index([accountId])
-  @@index([type])
-  @@index([date])
-  @@map("transactions")
+  @@index([userId])
+  @@index([isActive])
+  @@map("budgets")
 }
