@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import authRoutes from "../../src/routes/authRoutes.js";
 import { errorHandler } from "../../src/middlewares/errorHandler.js";
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 const app = express();
 
