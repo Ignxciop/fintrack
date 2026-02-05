@@ -6,26 +6,18 @@
 import nodemailer from "nodemailer";
 import logger from "../config/logger.js";
 
-// Configuración de Gmail SMTP
-// Soporta múltiples formatos de variables de entorno
-const emailUser =
-    process.env.GMAIL_USER || process.env.SMTP_USER || process.env.EMAIL_USER;
-const emailPass =
-    process.env.GMAIL_APP_PASSWORD ||
-    process.env.SMTP_PASS ||
-    process.env.EMAIL_PASS;
+// Configuración de SMTP
+const emailUser = process.env.SMTP_USER;
+const emailPass = process.env.SMTP_PASS;
 
 if (!emailUser || !emailPass) {
     logger.error("ERROR: Faltan credenciales de email en el archivo .env");
-    logger.error("Configura una de estas combinaciones:");
-    logger.error("- GMAIL_USER y GMAIL_APP_PASSWORD");
-    logger.error("- SMTP_USER y SMTP_PASS");
-    logger.error("- EMAIL_USER y EMAIL_PASS");
+    logger.error("Configura SMTP_USER y SMTP_PASS");
 }
 
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: parseInt(process.env.SMTP_PORT || "587"),
+    port: parseInt(process.env.SMTP_PORT || "465"),
     secure: process.env.SMTP_PORT === "465", // true para 465, false para 587
     auth: {
         user: emailUser,
@@ -36,7 +28,7 @@ const transporter = nodemailer.createTransport({
 // Verificar conexión al iniciar
 transporter.verify((error, success) => {
     if (error) {
-        logger.error({ err: error }, "Error al conectar con Gmail SMTP");
+        logger.error({ err: error }, "Error al conectar con SMTP");
     } else {
         logger.info("Servidor de email listo para enviar mensajes");
     }
