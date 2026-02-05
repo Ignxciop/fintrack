@@ -4,10 +4,6 @@ CREATE TYPE "RecurringFrequency" AS ENUM ('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'
 -- CreateEnum
 CREATE TYPE "BudgetPeriod" AS ENUM ('WEEKLY', 'MONTHLY', 'YEARLY');
 
--- AlterEnum
--- Remove old ADJUSTMENT type if exists
-ALTER TYPE "TransactionType" RENAME VALUE 'ADJUSTMENT' TO 'ADJUSTMENT_POSITIVE';
-
 -- CreateTable
 CREATE TABLE "categories" (
     "id" TEXT NOT NULL,
