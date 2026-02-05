@@ -85,62 +85,32 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8">
-            <Card className="w-full max-w-md">
-                <CardHeader className="space-y-1">
-                    <CardTitle className="text-2xl font-bold text-center">
-                        Crear Cuenta
-                    </CardTitle>
-                    <CardDescription className="text-center">
-                        Completa el formulario para registrarte
-                    </CardDescription>
-                </CardHeader>
-                <form onSubmit={handleSubmit}>
-                    <CardContent className="space-y-4">
-                        {error && (
-                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                                {error}
-                            </div>
-                        )}
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Nombre</Label>
-                                <Input
-                                    id="name"
-                                    name="name"
-                                    type="text"
-                                    placeholder="Juan"
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    required
-                                    disabled={isLoading}
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="lastname">Apellido</Label>
-                                <Input
-                                    id="lastname"
-                                    name="lastname"
-                                    type="text"
-                                    placeholder="Pérez"
-                                    value={formData.lastname}
-                                    onChange={handleChange}
-                                    required
-                                    disabled={isLoading}
-                                />
-                            </div>
+        <Card>
+            <CardHeader className="space-y-1">
+                <CardTitle className="text-2xl font-bold text-center">
+                    Crear Cuenta
+                </CardTitle>
+                <CardDescription className="text-center">
+                    Completa el formulario para registrarte
+                </CardDescription>
+            </CardHeader>
+            <form onSubmit={handleSubmit}>
+                <CardContent className="space-y-4">
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                            {error}
                         </div>
+                    )}
 
+                    <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
+                            <Label htmlFor="name">Nombre</Label>
                             <Input
-                                id="email"
-                                name="email"
-                                type="email"
-                                placeholder="tu@email.com"
-                                value={formData.email}
+                                id="name"
+                                name="name"
+                                type="text"
+                                placeholder="Juan"
+                                value={formData.name}
                                 onChange={handleChange}
                                 required
                                 disabled={isLoading}
@@ -148,57 +118,85 @@ export default function RegisterPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="password">Contraseña</Label>
+                            <Label htmlFor="lastname">Apellido</Label>
                             <Input
-                                id="password"
-                                name="password"
-                                type="password"
-                                placeholder="••••••••"
-                                value={formData.password}
+                                id="lastname"
+                                name="lastname"
+                                type="text"
+                                placeholder="Pérez"
+                                value={formData.lastname}
                                 onChange={handleChange}
                                 required
                                 disabled={isLoading}
                             />
                         </div>
+                    </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="confirmPassword">
-                                Confirmar Contraseña
-                            </Label>
-                            <Input
-                                id="confirmPassword"
-                                name="confirmPassword"
-                                type="password"
-                                placeholder="••••••••"
-                                value={formData.confirmPassword}
-                                onChange={handleChange}
-                                required
-                                disabled={isLoading}
-                            />
-                        </div>
-                    </CardContent>
-
-                    <CardFooter className="flex flex-col space-y-4 mt-2">
-                        <Button
-                            type="submit"
-                            className="w-full"
+                    <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                            id="email"
+                            name="email"
+                            type="email"
+                            placeholder="tu@email.com"
+                            value={formData.email}
+                            onChange={handleChange}
+                            required
                             disabled={isLoading}
-                        >
-                            {isLoading ? "Registrando..." : "Registrarse"}
-                        </Button>
+                        />
+                    </div>
 
-                        <div className="text-center text-sm text-gray-600">
-                            ¿Ya tienes cuenta?{" "}
-                            <Link
-                                to="/login"
-                                className="text-blue-600 hover:underline font-medium"
-                            >
-                                Inicia sesión aquí
-                            </Link>
-                        </div>
-                    </CardFooter>
-                </form>
-            </Card>
-        </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="password">Contraseña</Label>
+                        <Input
+                            id="password"
+                            name="password"
+                            type="password"
+                            placeholder="••••••••"
+                            value={formData.password}
+                            onChange={handleChange}
+                            required
+                            disabled={isLoading}
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">
+                            Confirmar Contraseña
+                        </Label>
+                        <Input
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            type="password"
+                            placeholder="••••••••"
+                            value={formData.confirmPassword}
+                            onChange={handleChange}
+                            required
+                            disabled={isLoading}
+                        />
+                    </div>
+                </CardContent>
+
+                <CardFooter className="flex flex-col space-y-4 mt-2">
+                    <Button
+                        type="submit"
+                        className="w-full"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? "Registrando..." : "Registrarse"}
+                    </Button>
+
+                    <div className="text-center text-sm text-gray-600">
+                        ¿Ya tienes cuenta?{" "}
+                        <Link
+                            to="/login"
+                            className="text-blue-600 hover:underline font-medium"
+                        >
+                            Inicia sesión aquí
+                        </Link>
+                    </div>
+                </CardFooter>
+            </form>
+        </Card>
     );
 }

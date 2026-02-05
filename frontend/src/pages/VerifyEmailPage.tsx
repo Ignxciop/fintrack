@@ -160,128 +160,118 @@ export default function VerifyEmailPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-            <Card className="w-full max-w-md">
-                <CardHeader className="space-y-1 text-center">
-                    <div className="flex justify-center mb-4">
-                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                            <Mail className="w-8 h-8 text-blue-600" />
-                        </div>
+        <Card>
+            <CardHeader className="space-y-1 text-center">
+                <div className="flex justify-center mb-4">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Mail className="w-8 h-8 text-blue-600" />
                     </div>
-                    <CardTitle className="text-2xl font-bold">
-                        Verifica tu Email
-                    </CardTitle>
-                    <CardDescription>
-                        Hemos enviado un código de 6 dígitos a:
-                        <br />
-                        <span className="font-semibold text-gray-900">
-                            {email}
-                        </span>
-                    </CardDescription>
-                </CardHeader>
+                </div>
+                <CardTitle className="text-2xl font-bold">
+                    Verifica tu Email
+                </CardTitle>
+                <CardDescription>
+                    Hemos enviado un código de 6 dígitos a:
+                    <br />
+                    <span className="font-semibold text-gray-900">{email}</span>
+                </CardDescription>
+            </CardHeader>
 
-                <form onSubmit={handleSubmit}>
-                    <CardContent className="space-y-4">
-                        {error && (
-                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                                {error}
-                            </div>
-                        )}
-
-                        {success && (
-                            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
-                                {success}
-                            </div>
-                        )}
-
-                        <div className="space-y-2">
-                            <Label htmlFor="code">Código de Verificación</Label>
-                            <Input
-                                id="code"
-                                type="text"
-                                placeholder="123456"
-                                value={code}
-                                onChange={(e) => {
-                                    const value = e.target.value.replace(
-                                        /\D/g,
-                                        "",
-                                    );
-                                    if (value.length <= 6) {
-                                        setCode(value);
-                                    }
-                                }}
-                                maxLength={6}
-                                required
-                                disabled={isLoading}
-                                className="text-center text-2xl tracking-widest font-mono"
-                            />
+            <form onSubmit={handleSubmit}>
+                <CardContent className="space-y-4">
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                            {error}
                         </div>
+                    )}
 
-                        <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
-                            <Clock className="w-4 h-4" />
-                            <span>
-                                {timeLeft > 0 ? (
-                                    <>
-                                        El código expira en{" "}
-                                        {formatTime(timeLeft)}
-                                    </>
-                                ) : (
-                                    <span className="text-red-600">
-                                        El código ha expirado
-                                    </span>
-                                )}
-                            </span>
+                    {success && (
+                        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+                            {success}
                         </div>
-                    </CardContent>
+                    )}
 
-                    <CardFooter className="flex flex-col space-y-4">
-                        <Button
-                            type="submit"
-                            className="w-full"
-                            disabled={isLoading || code.length !== 6}
-                        >
-                            {isLoading ? "Verificando..." : "Verificar Email"}
-                        </Button>
+                    <div className="space-y-2">
+                        <Label htmlFor="code">Código de Verificación</Label>
+                        <Input
+                            id="code"
+                            type="text"
+                            placeholder="123456"
+                            value={code}
+                            onChange={(e) => {
+                                const value = e.target.value.replace(/\D/g, "");
+                                if (value.length <= 6) {
+                                    setCode(value);
+                                }
+                            }}
+                            maxLength={6}
+                            required
+                            disabled={isLoading}
+                            className="text-center text-2xl tracking-widest font-mono"
+                        />
+                    </div>
 
-                        <div className="text-center w-full space-y-2">
-                            <p className="text-sm text-gray-600">
-                                ¿No recibiste el código?
-                            </p>
-                            {canResend || timeLeft === 0 ? (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="w-full"
-                                    onClick={handleResend}
-                                    disabled={isResending}
-                                >
-                                    <RefreshCw
-                                        className={`w-4 h-4 mr-2 ${isResending ? "animate-spin" : ""}`}
-                                    />
-                                    {isResending
-                                        ? "Reenviando..."
-                                        : "Reenviar Código"}
-                                </Button>
+                    <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
+                        <Clock className="w-4 h-4" />
+                        <span>
+                            {timeLeft > 0 ? (
+                                <>El código expira en {formatTime(timeLeft)}</>
                             ) : (
-                                <p className="text-sm text-gray-500">
-                                    Podrás reenviar el código en{" "}
-                                    {formatTime(timeLeft)}
-                                </p>
+                                <span className="text-red-600">
+                                    El código ha expirado
+                                </span>
                             )}
-                        </div>
+                        </span>
+                    </div>
+                </CardContent>
 
-                        <div className="text-center text-sm text-gray-600">
-                            ¿Email incorrecto?{" "}
-                            <Link
-                                to="/registro"
-                                className="text-blue-600 hover:underline font-medium"
+                <CardFooter className="flex flex-col space-y-4">
+                    <Button
+                        type="submit"
+                        className="w-full"
+                        disabled={isLoading || code.length !== 6}
+                    >
+                        {isLoading ? "Verificando..." : "Verificar Email"}
+                    </Button>
+
+                    <div className="text-center w-full space-y-2">
+                        <p className="text-sm text-gray-600">
+                            ¿No recibiste el código?
+                        </p>
+                        {canResend || timeLeft === 0 ? (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full"
+                                onClick={handleResend}
+                                disabled={isResending}
                             >
-                                Volver a registrarse
-                            </Link>
-                        </div>
-                    </CardFooter>
-                </form>
-            </Card>
-        </div>
+                                <RefreshCw
+                                    className={`w-4 h-4 mr-2 ${isResending ? "animate-spin" : ""}`}
+                                />
+                                {isResending
+                                    ? "Reenviando..."
+                                    : "Reenviar Código"}
+                            </Button>
+                        ) : (
+                            <p className="text-sm text-gray-500">
+                                Podrás reenviar el código en{" "}
+                                {formatTime(timeLeft)}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="text-center text-sm text-gray-600">
+                        ¿Email incorrecto?{" "}
+                        <Link
+                            to="/registro"
+                            className="text-blue-600 hover:underline font-medium"
+                        >
+                            Volver a registrarse
+                        </Link>
+                    </div>
+                </CardFooter>
+            </form>
+        </Card>
     );
 }

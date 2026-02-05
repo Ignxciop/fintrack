@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
+import AuthLayout from "./components/AuthLayout";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -12,31 +13,21 @@ function App() {
         <AuthProvider>
             <BrowserRouter>
                 <Routes>
-                    {/* Rutas públicas - redirigen a / si el usuario está autenticado */}
+                    {/* Rutas públicas - con AuthLayout */}
                     <Route
-                        path="/login"
                         element={
                             <PublicRoute>
-                                <LoginPage />
+                                <AuthLayout />
                             </PublicRoute>
                         }
-                    />
-                    <Route
-                        path="/registro"
-                        element={
-                            <PublicRoute>
-                                <RegisterPage />
-                            </PublicRoute>
-                        }
-                    />
-                    <Route
-                        path="/verificacion"
-                        element={
-                            <PublicRoute>
-                                <VerifyEmailPage />
-                            </PublicRoute>
-                        }
-                    />
+                    >
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route path="/registro" element={<RegisterPage />} />
+                        <Route
+                            path="/verificacion"
+                            element={<VerifyEmailPage />}
+                        />
+                    </Route>
 
                     {/* Rutas protegidas - requieren autenticación */}
                     <Route element={<ProtectedRoute />}>
