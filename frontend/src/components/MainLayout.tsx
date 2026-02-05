@@ -35,6 +35,8 @@ import {
     Sun,
     CreditCard,
     ArrowLeftRight,
+    Repeat,
+    PiggyBank,
 } from "lucide-react";
 
 export default function MainLayout() {
@@ -56,6 +58,8 @@ export default function MainLayout() {
         { title: "Dashboard", icon: Home, url: "/" },
         { title: "Cuentas", icon: CreditCard, url: "/cuentas" },
         { title: "Movimientos", icon: ArrowLeftRight, url: "/movimientos" },
+        { title: "Recurrentes", icon: Repeat, url: "/recurrentes" },
+        { title: "Presupuestos", icon: PiggyBank, url: "/presupuestos" },
     ];
 
     const getCurrentPageTitle = () => {
@@ -121,9 +125,7 @@ export default function MainLayout() {
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <SidebarMenuButton className="w-full h-auto py-2">
-                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-purple-600">
-                                                <User className="h-5 w-5 text-white" />
-                                            </div>
+                                            <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                                             <div className="flex flex-col flex-1 text-left text-sm gap-0.5">
                                                 <span className="font-medium leading-tight">
                                                     {user?.name}{" "}
@@ -137,7 +139,7 @@ export default function MainLayout() {
                                         </SidebarMenuButton>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent
-                                        className="w-[--radix-dropdown-menu-trigger-width] min-w-full"
+                                        className="w-[--radix-dropdown-menu-trigger-width]"
                                         align="start"
                                         side="top"
                                         sideOffset={4}
@@ -156,7 +158,6 @@ export default function MainLayout() {
                                                 ? "Modo oscuro"
                                                 : "Modo claro"}
                                         </DropdownMenuItem>
-                                        <DropdownMenuSeparator />
                                         <DropdownMenuItem
                                             onClick={() =>
                                                 navigate("/configuracion")

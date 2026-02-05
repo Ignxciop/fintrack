@@ -11,6 +11,8 @@ import RegisterPage from "./pages/RegisterPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import AccountsPage from "./pages/AccountsPage";
 import TransactionsPage from "./pages/TransactionsPage";
+import RecurrentsPage from "./pages/RecurrentsPage";
+import BudgetsPage from "./pages/BudgetsPage";
 
 function App() {
     return (
@@ -50,6 +52,14 @@ function App() {
                             <Route
                                 path="/movimientos"
                                 element={<TransactionsPage />}
+                            />
+                            <Route
+                                path="/recurrentes"
+                                element={<RecurrentsPage />}
+                            />
+                            <Route
+                                path="/presupuestos"
+                                element={<BudgetsPage />}
                             />
                         </Route>
                     </Routes>

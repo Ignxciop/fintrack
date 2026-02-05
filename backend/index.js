@@ -2,14 +2,15 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
-import dotenv from "dotenv";
 import authRoutes from "./src/routes/authRoutes.js";
 import accountRoutes from "./src/routes/accountRoutes.js";
 import transactionRoutes from "./src/routes/transactionRoutes.js";
+import categoryRoutes from "./src/routes/categoryRoutes.js";
+import recurringRoutes from "./src/routes/recurringRoutes.js";
+import budgetRoutes from "./src/routes/budgetRoutes.js";
 import { errorHandler } from "./src/middlewares/errorHandler.js";
 import logger from "./src/config/logger.js";
-
-dotenv.config();
+import { startRecurringCron } from "./src/jobs/recurringCron.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,6 +28,9 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/accounts", accountRoutes);
 app.use("/api/transactions", transactionRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/recurrings", recurringRoutes);
+app.use("/api/budgets", budgetRoutes);
 
 // Health check
 app.get("/health", (req, res) => {
@@ -37,4 +41,7 @@ app.use(errorHandler);
 
 app.listen(PORT, () => {
     logger.info(`Server running on port ${PORT}`);
+
+    // Iniciar cron job para procesar recurrentes
+    startRecurringCron();
 });
