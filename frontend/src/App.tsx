@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 import AuthLayout from "./components/AuthLayout";
@@ -11,38 +12,43 @@ import VerifyEmailPage from "./pages/VerifyEmailPage";
 
 function App() {
     return (
-        <AuthProvider>
-            <BrowserRouter>
-                <Routes>
-                    {/* Rutas públicas - con AuthLayout */}
-                    <Route
-                        element={
-                            <PublicRoute>
-                                <AuthLayout />
-                            </PublicRoute>
-                        }
-                    >
-                        <Route path="/login" element={<LoginPage />} />
-                        <Route path="/registro" element={<RegisterPage />} />
+        <ThemeProvider>
+            <AuthProvider>
+                <BrowserRouter>
+                    <Routes>
+                        {/* Rutas públicas - con AuthLayout */}
                         <Route
-                            path="/verificacion"
-                            element={<VerifyEmailPage />}
-                        />
-                    </Route>
+                            element={
+                                <PublicRoute>
+                                    <AuthLayout />
+                                </PublicRoute>
+                            }
+                        >
+                            <Route path="/login" element={<LoginPage />} />
+                            <Route
+                                path="/registro"
+                                element={<RegisterPage />}
+                            />
+                            <Route
+                                path="/verificacion"
+                                element={<VerifyEmailPage />}
+                            />
+                        </Route>
 
-                    {/* Rutas protegidas - con MainLayout */}
-                    <Route
-                        element={
-                            <ProtectedRoute>
-                                <MainLayout />
-                            </ProtectedRoute>
-                        }
-                    >
-                        <Route path="/" element={<HomePage />} />
-                    </Route>
-                </Routes>
-            </BrowserRouter>
-        </AuthProvider>
+                        {/* Rutas protegidas - con MainLayout */}
+                        <Route
+                            element={
+                                <ProtectedRoute>
+                                    <MainLayout />
+                                </ProtectedRoute>
+                            }
+                        >
+                            <Route path="/" element={<HomePage />} />
+                        </Route>
+                    </Routes>
+                </BrowserRouter>
+            </AuthProvider>
+        </ThemeProvider>
     );
 }
 

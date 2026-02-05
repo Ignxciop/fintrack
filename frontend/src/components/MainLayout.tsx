@@ -1,5 +1,6 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import logger from "../lib/logger";
 import {
     Sidebar,
@@ -33,10 +34,13 @@ import {
     LogOut,
     User,
     ChevronDown,
+    Moon,
+    Sun,
 } from "lucide-react";
 
 export default function MainLayout() {
     const { user, logout } = useAuth();
+    const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -143,6 +147,17 @@ export default function MainLayout() {
                                             Mi cuenta
                                         </DropdownMenuLabel>
                                         <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={toggleTheme}>
+                                            {theme === "light" ? (
+                                                <Moon className="mr-2 h-4 w-4" />
+                                            ) : (
+                                                <Sun className="mr-2 h-4 w-4" />
+                                            )}
+                                            {theme === "light"
+                                                ? "Modo oscuro"
+                                                : "Modo claro"}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
                                         <DropdownMenuItem
                                             onClick={() =>
                                                 navigate("/configuracion")
@@ -166,12 +181,12 @@ export default function MainLayout() {
                     </SidebarFooter>
                 </Sidebar>
 
-                <main className="flex-1 overflow-auto">
-                    <div className="border-b bg-white">
+                <main className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-950">
+                    <div className="border-b bg-white dark:bg-gray-900 dark:border-gray-800">
                         <div className="flex h-16 items-center px-4 gap-4">
                             <SidebarTrigger />
                             <div className="flex items-center gap-2">
-                                <h2 className="text-xl font-semibold text-gray-900">
+                                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                                     {getCurrentPageTitle()}
                                 </h2>
                             </div>
