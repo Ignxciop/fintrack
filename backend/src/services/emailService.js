@@ -16,11 +16,11 @@ const emailPass =
     process.env.EMAIL_PASS;
 
 if (!emailUser || !emailPass) {
-    logger.error("❌ ERROR: Faltan credenciales de email en el archivo .env");
-    logger.error("   Configura una de estas combinaciones:");
-    logger.error("   - GMAIL_USER y GMAIL_APP_PASSWORD");
-    logger.error("   - SMTP_USER y SMTP_PASS");
-    logger.error("   - EMAIL_USER y EMAIL_PASS");
+    logger.error("ERROR: Faltan credenciales de email en el archivo .env");
+    logger.error("Configura una de estas combinaciones:");
+    logger.error("- GMAIL_USER y GMAIL_APP_PASSWORD");
+    logger.error("- SMTP_USER y SMTP_PASS");
+    logger.error("- EMAIL_USER y EMAIL_PASS");
 }
 
 const transporter = nodemailer.createTransport({
@@ -36,9 +36,9 @@ const transporter = nodemailer.createTransport({
 // Verificar conexión al iniciar
 transporter.verify((error, success) => {
     if (error) {
-        logger.error({ err: error }, "❌ Error al conectar con Gmail SMTP");
+        logger.error({ err: error }, "Error al conectar con Gmail SMTP");
     } else {
-        logger.info("✅ Servidor de email listo para enviar mensajes");
+        logger.info("Servidor de email listo para enviar mensajes");
     }
 });
 
@@ -64,7 +64,7 @@ export const sendVerificationEmail = async (email, code) => {
                             </div>
                         </div>
                         <p style="color: #6b7280; font-size: 14px; line-height: 1.6;">
-                            ⏱️ Este código expira en <strong>5 minutos</strong>.
+                            Este código expira en <strong>5 minutos</strong>.
                         </p>
                         <p style="color: #6b7280; font-size: 14px; line-height: 1.6;">
                             Si no solicitaste este código, puedes ignorar este email de forma segura.
@@ -76,9 +76,9 @@ export const sendVerificationEmail = async (email, code) => {
                 </div>
             `,
         });
-        logger.info({ email }, "✅ Email de verificación enviado");
+        logger.info({ email }, "Email de verificación enviado");
     } catch (error) {
-        logger.error({ err: error, email }, "❌ Error al enviar email");
+        logger.error({ err: error, email }, "Error al enviar email");
         throw new Error("No se pudo enviar el email de verificación");
     }
 };
