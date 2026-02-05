@@ -9,6 +9,8 @@ import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
+import AccountsPage from "./pages/AccountsPage";
+import TransactionsPage from "./pages/TransactionsPage";
 
 function App() {
     return (
@@ -44,6 +46,11 @@ function App() {
                             }
                         >
                             <Route path="/" element={<HomePage />} />
+                            <Route path="/cuentas" element={<AccountsPage />} />
+                            <Route
+                                path="/movimientos"
+                                element={<TransactionsPage />}
+                            />
                         </Route>
                     </Routes>
                 </BrowserRouter>

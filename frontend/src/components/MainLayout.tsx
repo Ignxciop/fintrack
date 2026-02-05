@@ -1,4 +1,4 @@
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import logger from "../lib/logger";
@@ -24,18 +24,17 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { Button } from "./ui/button";
 import {
     Home,
     Wallet,
-    TrendingUp,
-    PieChart,
     Settings,
     LogOut,
     User,
     ChevronDown,
     Moon,
     Sun,
+    CreditCard,
+    ArrowLeftRight,
 } from "lucide-react";
 
 export default function MainLayout() {
@@ -47,7 +46,7 @@ export default function MainLayout() {
     const handleLogout = async () => {
         try {
             await logout();
-            navigate("/login");
+            window.location.href = "/login";
         } catch (error) {
             logger.error("Error al cerrar sesión:", error);
         }
@@ -55,10 +54,8 @@ export default function MainLayout() {
 
     const menuItems = [
         { title: "Dashboard", icon: Home, url: "/" },
-        { title: "Transacciones", icon: Wallet, url: "/transacciones" },
-        { title: "Inversiones", icon: TrendingUp, url: "/inversiones" },
-        { title: "Reportes", icon: PieChart, url: "/reportes" },
-        { title: "Configuración", icon: Settings, url: "/configuracion" },
+        { title: "Cuentas", icon: CreditCard, url: "/cuentas" },
+        { title: "Movimientos", icon: ArrowLeftRight, url: "/movimientos" },
     ];
 
     const getCurrentPageTitle = () => {
@@ -106,10 +103,10 @@ export default function MainLayout() {
                                                     item.url
                                                 }
                                             >
-                                                <a href={item.url}>
+                                                <Link to={item.url}>
                                                     <item.icon className="h-4 w-4" />
                                                     <span>{item.title}</span>
-                                                </a>
+                                                </Link>
                                             </SidebarMenuButton>
                                         </SidebarMenuItem>
                                     ))}
@@ -128,11 +125,11 @@ export default function MainLayout() {
                                                 <User className="h-4 w-4 text-white" />
                                             </div>
                                             <div className="flex flex-col flex-1 text-left text-sm">
-                                                <span className="font-medium">
+                                                <span className="font-medium leading-tight">
                                                     {user?.name}{" "}
                                                     {user?.lastname}
                                                 </span>
-                                                <span className="text-xs text-muted-foreground truncate">
+                                                <span className="text-xs text-muted-foreground truncate leading-normal">
                                                     {user?.email}
                                                 </span>
                                             </div>
@@ -140,8 +137,9 @@ export default function MainLayout() {
                                         </SidebarMenuButton>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent
-                                        className="w-[--radix-popper-anchor-width]"
+                                        className="w-[--radix-dropdown-menu-trigger-width]"
                                         align="start"
+                                        side="top"
                                     >
                                         <DropdownMenuLabel>
                                             Mi cuenta
