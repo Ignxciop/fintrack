@@ -1,5 +1,4 @@
 import { useAuth } from "../context/AuthContext";
-import { Button } from "../components/ui/button";
 import {
     Card,
     CardContent,
@@ -9,53 +8,40 @@ import {
 } from "../components/ui/card";
 
 export default function HomePage() {
-    const { user, logout } = useAuth();
-
-    const handleLogout = async () => {
-        try {
-            await logout();
-        } catch (error) {
-            console.error("Error al cerrar sesión:", error);
-        }
-    };
+    const { user } = useAuth();
 
     return (
-        <div className="min-h-screen bg-gray-50 p-4">
-            <div className="max-w-7xl mx-auto">
-                <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">
-                        FinTrack
-                    </h1>
-                    <Button onClick={handleLogout} variant="outline">
-                        Cerrar Sesión
-                    </Button>
-                </div>
+        <div className="space-y-6">
+            <div>
+                <h1 className="text-3xl font-bold text-gray-900">
+                    Bienvenido, {user?.nombre}
+                </h1>
+                <p className="text-muted-foreground mt-1">
+                    Panel de control de finanzas personales
+                </p>
+            </div>
 
+            <div className="space-y-4">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Bienvenido a FinTrack</CardTitle>
-                        <CardDescription>
-                            Panel de control de finanzas personales
-                        </CardDescription>
+                        <CardTitle>Información del Usuario</CardTitle>
+                        <CardDescription>Detalles de tu cuenta</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                <h3 className="font-semibold text-blue-900 mb-2">
-                                    Información del Usuario
-                                </h3>
                                 <div className="space-y-1 text-sm text-blue-800">
                                     <p>
                                         <span className="font-medium">
                                             Nombre:
                                         </span>{" "}
-                                        {user?.name} {user?.lastname}
+                                        {user?.nombre}
                                     </p>
                                     <p>
                                         <span className="font-medium">
                                             Email:
                                         </span>{" "}
-                                        {user?.email}
+                                        {user?.correo}
                                     </p>
                                     <p>
                                         <span className="font-medium">ID:</span>{" "}

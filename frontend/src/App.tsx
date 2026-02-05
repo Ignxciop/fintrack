@@ -3,6 +3,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 import AuthLayout from "./components/AuthLayout";
+import MainLayout from "./components/MainLayout";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -29,8 +30,14 @@ function App() {
                         />
                     </Route>
 
-                    {/* Rutas protegidas - requieren autenticación */}
-                    <Route element={<ProtectedRoute />}>
+                    {/* Rutas protegidas - con MainLayout */}
+                    <Route
+                        element={
+                            <ProtectedRoute>
+                                <MainLayout />
+                            </ProtectedRoute>
+                        }
+                    >
                         <Route path="/" element={<HomePage />} />
                     </Route>
                 </Routes>
