@@ -5,7 +5,7 @@
     "main": "index.js",
     "type": "module",
     "scripts": {
-        "start": "sh migrate-and-start.sh",
+        "start": "node index.js",
         "dev": "nodemon index.js",
         "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
         "test:unit": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand __tests__/unit",
