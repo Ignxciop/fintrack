@@ -183,7 +183,7 @@ export default function AccountForm({
                         setFormData({ ...formData, name: e.target.value })
                     }
                     placeholder="Ej: Cuenta Corriente Banco Chile"
-                    className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 text-base"
+                    className="dark:bg-slate-800/50 dark:border-blue-900/30 dark:text-gray-100 text-base"
                 />
                 {errors.name && (
                     <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">
@@ -213,10 +213,10 @@ export default function AccountForm({
                                 })
                             }
                         >
-                            <SelectTrigger className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 text-base h-11">
+                            <SelectTrigger className="dark:bg-slate-800/50 dark:border-blue-900/30 dark:text-gray-100 text-base h-11">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                            <SelectContent className="dark:bg-slate-800/50 dark:border-blue-900/30">
                                 <SelectItem value="CASH">Efectivo</SelectItem>
                                 <SelectItem value="DEBIT">Débito</SelectItem>
                                 <SelectItem value="CREDIT">Crédito</SelectItem>
@@ -244,7 +244,7 @@ export default function AccountForm({
                                 })
                             }
                             placeholder="0"
-                            className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 text-base"
+                            className="dark:bg-slate-800/50 dark:border-blue-900/30 dark:text-gray-100 text-base"
                         />
                         {errors.initialBalance && (
                             <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">
@@ -272,10 +272,10 @@ export default function AccountForm({
                                 setFormData({ ...formData, currency: value })
                             }
                         >
-                            <SelectTrigger className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 text-base h-11">
+                            <SelectTrigger className="dark:bg-slate-800/50 dark:border-blue-900/30 dark:text-gray-100 text-base h-11">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                            <SelectContent className="dark:bg-slate-800/50 dark:border-blue-900/30">
                                 <SelectItem value="CLP">
                                     CLP (Peso Chileno)
                                 </SelectItem>
@@ -308,7 +308,7 @@ export default function AccountForm({
                                 })
                             }
                             placeholder="0"
-                            className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 text-base"
+                            className="dark:bg-slate-800/50 dark:border-blue-900/30 dark:text-gray-100 text-base"
                         />
                         {errors.creditLimit && (
                             <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">
@@ -338,7 +338,7 @@ export default function AccountForm({
                                     })
                                 }
                                 placeholder="1-31"
-                                className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 text-base"
+                                className="dark:bg-slate-800/50 dark:border-blue-900/30 dark:text-gray-100 text-base"
                             />
                             {errors.billingDay && (
                                 <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">
@@ -367,7 +367,7 @@ export default function AccountForm({
                                     })
                                 }
                                 placeholder="1-31"
-                                className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 text-base"
+                                className="dark:bg-slate-800/50 dark:border-blue-900/30 dark:text-gray-100 text-base"
                             />
                             {errors.paymentDueDay && (
                                 <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">

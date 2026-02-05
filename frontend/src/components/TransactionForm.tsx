@@ -49,19 +49,30 @@ export default function TransactionForm({
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
+    // Cargar cuentas al montar
     useEffect(() => {
         loadAccounts();
     }, []);
 
+    // Sincronizar formData con transaction cuando cambia
     useEffect(() => {
         if (transaction) {
-            setFormData({
+            const newFormData = {
                 accountId: transaction.accountId,
                 type: transaction.type,
                 amount: transaction.amount,
                 description: transaction.description || "",
                 date: new Date(transaction.date).toISOString().split("T")[0],
-            });
+            };
+            setFormData(newFormData);
+
+            // Buscar y setear la cuenta seleccionada inmediatamente
+            if (accounts.length > 0) {
+                const account = accounts.find(
+                    (a) => a.id === transaction.accountId,
+                );
+                setSelectedAccount(account || null);
+            }
         } else {
             setFormData({
                 accountId: "",
@@ -70,14 +81,16 @@ export default function TransactionForm({
                 description: "",
                 date: new Date().toISOString().split("T")[0],
             });
+            setSelectedAccount(null);
         }
-    }, [transaction]);
+    }, [transaction, accounts]);
 
+    // Actualizar selectedAccount cuando cambia accountId
     useEffect(() => {
         if (formData.accountId && accounts.length > 0) {
             const account = accounts.find((a) => a.id === formData.accountId);
             setSelectedAccount(account || null);
-        } else {
+        } else if (!formData.accountId) {
             setSelectedAccount(null);
         }
     }, [formData.accountId, accounts]);
@@ -197,17 +210,26 @@ export default function TransactionForm({
                     Cuenta
                 </Label>
                 <Select
-                    key={`account-${transaction?.id || "new"}`}
-                    value={formData.accountId}
-                    defaultValue={formData.accountId}
+                    value={formData.accountId || ""}
                     onValueChange={(value) =>
                         setFormData({ ...formData, accountId: value })
                     }
                 >
-                    <SelectTrigger className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 text-base h-11">
-                        <SelectValue placeholder="Selecciona una cuenta" />
+                    <SelectTrigger className="dark:bg-slate-800/50 dark:border-blue-900/30 dark:text-gray-100 text-base h-11">
+                        <SelectValue placeholder="Selecciona una cuenta">
+                            {formData.accountId && accounts.length > 0
+                                ? (() => {
+                                      const account = accounts.find(
+                                          (a) => a.id === formData.accountId,
+                                      );
+                                      return account
+                                          ? `${account.name} (${ACCOUNT_TYPE_LABELS[account.type]})`
+                                          : "Selecciona una cuenta";
+                                  })()
+                                : null}
+                        </SelectValue>
                     </SelectTrigger>
-                    <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                    <SelectContent className="dark:bg-slate-800/50 dark:border-blue-900/30">
                         {accounts.map((account) => (
                             <SelectItem key={account.id} value={account.id}>
                                 {account.name} (
@@ -228,24 +250,26 @@ export default function TransactionForm({
                     Tipo de movimiento
                 </Label>
                 <Select
-                    key={`type-${transaction?.id || "new"}-${formData.accountId}`}
                     value={formData.type}
-                    defaultValue={formData.type}
                     onValueChange={(value: any) =>
                         setFormData({ ...formData, type: value })
                     }
                     disabled={!formData.accountId}
                 >
-                    <SelectTrigger className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 text-base h-11">
+                    <SelectTrigger className="dark:bg-slate-800/50 dark:border-blue-900/30 dark:text-gray-100 text-base h-11">
                         <SelectValue
                             placeholder={
                                 !formData.accountId
                                     ? "Selecciona una cuenta primero"
                                     : undefined
                             }
-                        />
+                        >
+                            {formData.accountId && formData.type
+                                ? getTypeLabel(formData.type)
+                                : null}
+                        </SelectValue>
                     </SelectTrigger>
-                    <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                    <SelectContent className="dark:bg-slate-800/50 dark:border-blue-900/30">
                         <SelectItem value="INCOME">
                             {getTypeLabel("INCOME")}
                         </SelectItem>
@@ -275,7 +299,7 @@ export default function TransactionForm({
                         setFormData({ ...formData, amount: e.target.value })
                     }
                     placeholder="0"
-                    className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 text-base"
+                    className="dark:bg-slate-800/50 dark:border-blue-900/30 dark:text-gray-100 text-base"
                 />
                 {errors.amount && (
                     <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">
@@ -295,7 +319,7 @@ export default function TransactionForm({
                     onChange={(e) =>
                         setFormData({ ...formData, date: e.target.value })
                     }
-                    className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 text-base"
+                    className="dark:bg-slate-800/50 dark:border-blue-900/30 dark:text-gray-100 text-base"
                 />
                 {errors.date && (
                     <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">
@@ -321,7 +345,7 @@ export default function TransactionForm({
                         })
                     }
                     placeholder="Ej: Supermercado, Gasolina, etc."
-                    className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 text-base"
+                    className="dark:bg-slate-800/50 dark:border-blue-900/30 dark:text-gray-100 text-base"
                 />
             </div>
 

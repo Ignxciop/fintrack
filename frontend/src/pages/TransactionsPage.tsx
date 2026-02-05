@@ -178,7 +178,7 @@ export default function TransactionsPage() {
                     {transactions.map((transaction) => (
                         <Card
                             key={transaction.id}
-                            className="hover:shadow-md transition-shadow dark:bg-gray-900 dark:border-gray-800"
+                            className="hover:shadow-md transition-shadow dark:bg-slate-900/50 dark:border-blue-900/30"
                         >
                             <CardHeader className="pb-3">
                                 <div className="flex justify-between items-start gap-3">

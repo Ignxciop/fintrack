@@ -120,16 +120,16 @@ export default function MainLayout() {
                             <SidebarMenuItem>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <SidebarMenuButton className="w-full">
-                                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-purple-600">
-                                                <User className="h-4 w-4 text-white" />
+                                        <SidebarMenuButton className="w-full h-auto py-2">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-purple-600">
+                                                <User className="h-5 w-5 text-white" />
                                             </div>
-                                            <div className="flex flex-col flex-1 text-left text-sm">
+                                            <div className="flex flex-col flex-1 text-left text-sm gap-0.5">
                                                 <span className="font-medium leading-tight">
                                                     {user?.name}{" "}
                                                     {user?.lastname}
                                                 </span>
-                                                <span className="text-xs text-muted-foreground truncate leading-normal">
+                                                <span className="text-xs text-muted-foreground truncate leading-tight">
                                                     {user?.email}
                                                 </span>
                                             </div>
@@ -137,9 +137,10 @@ export default function MainLayout() {
                                         </SidebarMenuButton>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent
-                                        className="w-[--radix-dropdown-menu-trigger-width]"
+                                        className="w-[--radix-dropdown-menu-trigger-width] min-w-full"
                                         align="start"
                                         side="top"
+                                        sideOffset={4}
                                     >
                                         <DropdownMenuLabel>
                                             Mi cuenta
@@ -179,8 +180,8 @@ export default function MainLayout() {
                     </SidebarFooter>
                 </Sidebar>
 
-                <main className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-950">
-                    <div className="border-b bg-white dark:bg-gray-900 dark:border-gray-800">
+                <main className="flex-1 overflow-auto bg-gray-50 dark:bg-slate-950">
+                    <div className="border-b bg-white dark:bg-slate-900/50 dark:border-blue-900/30">
                         <div className="flex h-16 items-center px-4 gap-4">
                             <SidebarTrigger />
                             <div className="flex items-center gap-2">

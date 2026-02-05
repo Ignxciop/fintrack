@@ -155,7 +155,7 @@ export default function AccountsPage() {
                     {accounts.map((account) => (
                         <Card
                             key={account.id}
-                            className="hover:shadow-lg transition-shadow dark:bg-gray-900 dark:border-gray-800"
+                            className="hover:shadow-lg transition-shadow dark:bg-slate-900/50 dark:border-blue-900/30"
                         >
                             <CardHeader>
                                 <div className="flex justify-between items-start">
@@ -231,7 +231,7 @@ export default function AccountsPage() {
             )}
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="dark:bg-gray-900 dark:border-gray-800">
+                <DialogContent className="dark:bg-slate-900 dark:border-blue-900/30">
                     <DialogHeader>
                         <DialogTitle className="dark:text-gray-100">
                             {selectedAccount ? "Editar Cuenta" : "Nueva Cuenta"}
@@ -257,7 +257,7 @@ export default function AccountsPage() {
                 open={!!accountToDelete}
                 onOpenChange={() => setAccountToDelete(null)}
             >
-                <AlertDialogContent className="dark:bg-gray-900 dark:border-gray-800">
+                <AlertDialogContent className="dark:bg-slate-900 dark:border-blue-900/30">
                     <AlertDialogHeader>
                         <AlertDialogTitle className="dark:text-gray-100">
                             ¿Estás seguro?
@@ -268,7 +268,7 @@ export default function AccountsPage() {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
+                        <AlertDialogCancel className="dark:bg-slate-800 dark:border-blue-900/30 dark:text-gray-100">
                             Cancelar
                         </AlertDialogCancel>
                         <AlertDialogAction
