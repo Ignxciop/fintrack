@@ -2,7 +2,6 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 
-// Crear instancia de axios
 const api = axios.create({
     baseURL: API_URL,
     headers: {
@@ -10,7 +9,19 @@ const api = axios.create({
     },
 });
 
-// Interceptor para agregar el token a cada petición
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
+const subscribeTokenRefresh = (cb: (token: string) => void) => {
+    refreshSubscribers.push(cb);
+};
+
+const onRefreshed = (token: string) => {
+    refreshSubscribers.forEach((cb) => cb(token));
+    refreshSubscribers = [];
+};
+
+// Crear instancia de axios
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem("accessToken");
@@ -24,15 +35,23 @@ api.interceptors.request.use(
     },
 );
 
-// Interceptor para renovar el token automáticamente
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
 
-        // Si el error es 401 y no hemos intentado renovar el token
         if (error.response?.status === 401 && !originalRequest._retry) {
+            if (isRefreshing) {
+                return new Promise((resolve) => {
+                    subscribeTokenRefresh((token: string) => {
+                        originalRequest.headers.Authorization = `Bearer ${token}`;
+                        resolve(api(originalRequest));
+                    });
+                });
+            }
+
             originalRequest._retry = true;
+            isRefreshing = true;
 
             try {
                 const refreshToken = localStorage.getItem("refreshToken");
@@ -50,9 +69,13 @@ api.interceptors.response.use(
                 localStorage.setItem("accessToken", accessToken);
                 localStorage.setItem("refreshToken", newRefreshToken);
 
+                isRefreshing = false;
+                onRefreshed(accessToken);
+
                 originalRequest.headers.Authorization = `Bearer ${accessToken}`;
                 return api(originalRequest);
             } catch (refreshError) {
+                isRefreshing = false;
                 localStorage.removeItem("accessToken");
                 localStorage.removeItem("refreshToken");
                 window.location.href = "/login";

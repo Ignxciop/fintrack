@@ -56,9 +56,22 @@ export class RefreshTokenService {
             throw error;
         }
 
-        // Verificar si está revocado
         if (refreshToken.isRevoked) {
-            // Si se intenta usar un token revocado, revocar toda la cadena de tokens
+            if (refreshToken.replacedBy) {
+                const replacementToken = await prisma.refreshToken.findUnique({
+                    where: { token: refreshToken.replacedBy },
+                    include: { user: true },
+                });
+
+                if (
+                    replacementToken &&
+                    !replacementToken.isRevoked &&
+                    new Date() <= replacementToken.expiresAt
+                ) {
+                    return replacementToken;
+                }
+            }
+
             await this.revokeTokenFamily(token);
             const error = new Error(
                 "Refresh token revocado. Por seguridad, se han revocado todos tus tokens.",
