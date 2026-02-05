@@ -22,4 +22,4 @@ USER nodejs
 
 EXPOSE 4006
 
-CMD ["sh", "-c", "pnpm prisma migrate resolve --applied 20260204121951_add_refresh_tokens || true && pnpm prisma migrate resolve --applied 20260204132257_add_email_verification || true && pnpm prisma migrate resolve --applied 20260205094242_add_accounts || true && pnpm prisma migrate resolve --applied 20260205102400_add_transactions || true && pnpm prisma migrate resolve --applied 20260205131915_add_new_transaction_types || true && pnpm prisma migrate deploy && node index.js"]
+CMD ["sh", "-c", "pnpm prisma migrate resolve --applied 20260204121951_add_refresh_tokens || true && pnpm prisma migrate resolve --applied 20260204132257_add_email_verification || true && pnpm prisma migrate resolve --applied 20260205094242_add_accounts || true && pnpm prisma migrate resolve --applied 20260205102400_add_transactions || true && pnpm prisma migrate resolve --applied 20260205131915_add_new_transaction_types || true && pnpm prisma migrate resolve --rolled-back 20260205173500_add_categories_recurrings_budgets || true && pnpm prisma migrate deploy && node index.js"]
