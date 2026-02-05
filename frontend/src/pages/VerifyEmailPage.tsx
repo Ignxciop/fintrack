@@ -160,7 +160,7 @@ export default function VerifyEmailPage() {
     }
 
     return (
-        <Card>
+        <Card className="!bg-white !text-gray-900 !border-gray-200">
             <CardHeader className="space-y-1 text-center">
                 <div className="flex justify-center mb-4">
                     <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
@@ -170,10 +170,12 @@ export default function VerifyEmailPage() {
                 <CardTitle className="text-2xl font-bold">
                     Verifica tu Email
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="!text-gray-600">
                     Hemos enviado un código de 6 dígitos a:
                     <br />
-                    <span className="font-semibold text-gray-900">{email}</span>
+                    <span className="font-semibold !text-gray-900">
+                        {email}
+                    </span>
                 </CardDescription>
             </CardHeader>
 
@@ -192,7 +194,9 @@ export default function VerifyEmailPage() {
                     )}
 
                     <div className="space-y-2">
-                        <Label htmlFor="code">Código de Verificación</Label>
+                        <Label htmlFor="code" className="!text-gray-900">
+                            Código de Verificación
+                        </Label>
                         <Input
                             id="code"
                             type="text"
@@ -207,7 +211,7 @@ export default function VerifyEmailPage() {
                             maxLength={6}
                             required
                             disabled={isLoading}
-                            className="text-center text-2xl tracking-widest font-mono"
+                            className="!bg-white !text-gray-900 !border-gray-300 text-center text-2xl tracking-widest font-mono"
                         />
                     </div>
 
@@ -242,7 +246,7 @@ export default function VerifyEmailPage() {
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="w-full"
+                                className="w-full !bg-white !text-gray-900 !border-gray-300 hover:!bg-gray-50"
                                 onClick={handleResend}
                                 disabled={isResending}
                             >
