@@ -117,10 +117,11 @@ export default function MainLayout() {
                                             </div>
                                             <div className="flex flex-col flex-1 text-left text-sm">
                                                 <span className="font-medium">
-                                                    {user?.nombre}
+                                                    {user?.name}{" "}
+                                                    {user?.lastname}
                                                 </span>
-                                                <span className="text-xs text-muted-foreground">
-                                                    {user?.correo}
+                                                <span className="text-xs text-muted-foreground truncate">
+                                                    {user?.email}
                                                 </span>
                                             </div>
                                             <ChevronDown className="ml-auto h-4 w-4" />

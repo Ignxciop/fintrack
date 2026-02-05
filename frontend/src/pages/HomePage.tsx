@@ -14,7 +14,7 @@ export default function HomePage() {
         <div className="space-y-6">
             <div>
                 <h1 className="text-3xl font-bold text-gray-900">
-                    Bienvenido, {user?.nombre}
+                    Bienvenido, {user?.name} {user?.lastname}
                 </h1>
                 <p className="text-muted-foreground mt-1">
                     Panel de control de finanzas personales
@@ -35,13 +35,13 @@ export default function HomePage() {
                                         <span className="font-medium">
                                             Nombre:
                                         </span>{" "}
-                                        {user?.nombre}
+                                        {user?.name} {user?.lastname}
                                     </p>
                                     <p>
                                         <span className="font-medium">
                                             Email:
                                         </span>{" "}
-                                        {user?.correo}
+                                        {user?.email}
                                     </p>
                                     <p>
                                         <span className="font-medium">ID:</span>{" "}
