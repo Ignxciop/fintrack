@@ -4,6 +4,7 @@
  */
 
 import nodemailer from "nodemailer";
+import logger from "../config/logger.js";
 
 // Configuración de Gmail SMTP
 // Soporta múltiples formatos de variables de entorno
@@ -15,11 +16,11 @@ const emailPass =
     process.env.EMAIL_PASS;
 
 if (!emailUser || !emailPass) {
-    console.error("❌ ERROR: Faltan credenciales de email en el archivo .env");
-    console.error("   Configura una de estas combinaciones:");
-    console.error("   - GMAIL_USER y GMAIL_APP_PASSWORD");
-    console.error("   - SMTP_USER y SMTP_PASS");
-    console.error("   - EMAIL_USER y EMAIL_PASS");
+    logger.error("❌ ERROR: Faltan credenciales de email en el archivo .env");
+    logger.error("   Configura una de estas combinaciones:");
+    logger.error("   - GMAIL_USER y GMAIL_APP_PASSWORD");
+    logger.error("   - SMTP_USER y SMTP_PASS");
+    logger.error("   - EMAIL_USER y EMAIL_PASS");
 }
 
 const transporter = nodemailer.createTransport({
@@ -35,9 +36,9 @@ const transporter = nodemailer.createTransport({
 // Verificar conexión al iniciar
 transporter.verify((error, success) => {
     if (error) {
-        console.error("❌ Error al conectar con Gmail SMTP:", error);
+        logger.error({ err: error }, "❌ Error al conectar con Gmail SMTP");
     } else {
-        console.log("✅ Servidor de email listo para enviar mensajes");
+        logger.info("✅ Servidor de email listo para enviar mensajes");
     }
 });
 
@@ -75,9 +76,9 @@ export const sendVerificationEmail = async (email, code) => {
                 </div>
             `,
         });
-        console.log(`✅ Email de verificación enviado a ${email}`);
+        logger.info({ email }, "✅ Email de verificación enviado");
     } catch (error) {
-        console.error("❌ Error al enviar email:", error);
+        logger.error({ err: error, email }, "❌ Error al enviar email");
         throw new Error("No se pudo enviar el email de verificación");
     }
 };

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { authService } from "../services/authService";
 import type { User } from "../services/authService";
+import logger from "../lib/logger";
 
 interface AuthContextType {
     user: User | null;
@@ -34,7 +35,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
                     const userData = await authService.getMe();
                     setUser(userData);
                 } catch (error) {
-                    console.error("Error al obtener usuario:", error);
+                    logger.error("Error al obtener usuario:", error);
                     localStorage.removeItem("accessToken");
                     localStorage.removeItem("refreshToken");
                 }

@@ -1,5 +1,6 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import logger from "../lib/logger";
 import {
     Sidebar,
     SidebarContent,
@@ -44,7 +45,7 @@ export default function MainLayout() {
             await logout();
             navigate("/login");
         } catch (error) {
-            console.error("Error al cerrar sesión:", error);
+            logger.error("Error al cerrar sesión:", error);
         }
     };
 
@@ -55,6 +56,13 @@ export default function MainLayout() {
         { title: "Reportes", icon: PieChart, url: "/reportes" },
         { title: "Configuración", icon: Settings, url: "/configuracion" },
     ];
+
+    const getCurrentPageTitle = () => {
+        const currentItem = menuItems.find(
+            (item) => item.url === location.pathname,
+        );
+        return currentItem?.title || "Dashboard";
+    };
 
     return (
         <SidebarProvider>
@@ -162,6 +170,11 @@ export default function MainLayout() {
                     <div className="border-b bg-white">
                         <div className="flex h-16 items-center px-4 gap-4">
                             <SidebarTrigger />
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-xl font-semibold text-gray-900">
+                                    {getCurrentPageTitle()}
+                                </h2>
+                            </div>
                             <div className="flex-1" />
                         </div>
                     </div>
