@@ -110,7 +110,7 @@ export class AuthController {
 
     static async logoutAll(req, res, next) {
         try {
-            await AuthService.logoutAll(req.userId);
+            await AuthService.logoutAll(req.user.userId);
 
             res.status(200).json({
                 success: true,
@@ -123,7 +123,7 @@ export class AuthController {
 
     static async getMe(req, res, next) {
         try {
-            const user = await AuthService.getMe(req.userId);
+            const user = await AuthService.getMe(req.user.userId);
 
             res.status(200).json({
                 success: true,
@@ -136,7 +136,9 @@ export class AuthController {
 
     static async getActiveSessions(req, res, next) {
         try {
-            const sessions = await AuthService.getActiveSessions(req.userId);
+            const sessions = await AuthService.getActiveSessions(
+                req.user.userId,
+            );
 
             res.status(200).json({
                 success: true,

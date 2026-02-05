@@ -13,7 +13,7 @@ export const authenticate = async (req, res, next) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.userId = decoded.userId;
+        req.user = { userId: decoded.userId };
         next();
     } catch (error) {
         if (error.name === "JsonWebTokenError") {
