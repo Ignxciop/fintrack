@@ -18,6 +18,7 @@ model User {
   updatedAt          DateTime            @updatedAt
   refreshTokens      RefreshToken[]
   verificationCodes  VerificationCode[]
+  accounts           Account[]
 
   @@map("users")
 }
@@ -51,4 +52,57 @@ model VerificationCode {
   @@index([userId])
   @@index([code])
   @@map("verification_codes")
+}
+
+enum AccountType {
+  CASH
+  DEBIT
+  CREDIT
+  SAVINGS
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  ADJUSTMENT
+}
+
+model Account {
+  id              String      @id @default(uuid())
+  name            String
+  type            AccountType
+  initialBalance  Decimal     @db.Decimal(15, 2)
+  currentBalance  Decimal     @db.Decimal(15, 2)
+  currency        String      @default("CLP")
+  creditLimit     Decimal?    @db.Decimal(15, 2)
+  billingDay      Int?
+  paymentDueDay   Int?
+  isActive        Boolean     @default(true)
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions    Transaction[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([type])
+  @@map("accounts")
+}
+
+model Transaction {
+  id          String          @id @default(uuid())
+  accountId   String
+  account     Account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  type        TransactionType
+  amount      Decimal         @db.Decimal(15, 2)
+  categoryId  String?
+  description String?
+  date        DateTime
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([accountId])
+  @@index([type])
+  @@index([date])
+  @@map("transactions")
 }
