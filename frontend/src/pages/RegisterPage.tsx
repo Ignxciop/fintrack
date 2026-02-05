@@ -75,17 +75,17 @@ export default function RegisterPage() {
         } catch (err: any) {
             // Extraer el mensaje de error del backend
             const errorMessage =
+                err.response?.data?.error ||
                 err.response?.data?.message ||
                 err.message ||
                 "Error al registrarse";
             setError(errorMessage);
-        } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <Card>
+        <Card className="!bg-white !text-gray-900 !border-gray-200">
             <CardHeader className="space-y-1">
                 <CardTitle className="text-2xl font-bold text-center">
                     Crear Cuenta
@@ -104,7 +104,9 @@ export default function RegisterPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="name">Nombre</Label>
+                            <Label htmlFor="name" className="!text-gray-900">
+                                Nombre
+                            </Label>
                             <Input
                                 id="name"
                                 name="name"
@@ -114,11 +116,17 @@ export default function RegisterPage() {
                                 onChange={handleChange}
                                 required
                                 disabled={isLoading}
+                                className="!bg-white !text-gray-900 !border-gray-300"
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="lastname">Apellido</Label>
+                            <Label
+                                htmlFor="lastname"
+                                className="!text-gray-900"
+                            >
+                                Apellido
+                            </Label>
                             <Input
                                 id="lastname"
                                 name="lastname"
@@ -128,12 +136,15 @@ export default function RegisterPage() {
                                 onChange={handleChange}
                                 required
                                 disabled={isLoading}
+                                className="!bg-white !text-gray-900 !border-gray-300"
                             />
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="email" className="!text-gray-900">
+                            Email
+                        </Label>
                         <Input
                             id="email"
                             name="email"
@@ -143,11 +154,14 @@ export default function RegisterPage() {
                             onChange={handleChange}
                             required
                             disabled={isLoading}
+                            className="!bg-white !text-gray-900 !border-gray-300"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="password">Contraseña</Label>
+                        <Label htmlFor="password" className="!text-gray-900">
+                            Contraseña
+                        </Label>
                         <Input
                             id="password"
                             name="password"
@@ -157,11 +171,15 @@ export default function RegisterPage() {
                             onChange={handleChange}
                             required
                             disabled={isLoading}
+                            className="!bg-white !text-gray-900 !border-gray-300"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="confirmPassword">
+                        <Label
+                            htmlFor="confirmPassword"
+                            className="!text-gray-900"
+                        >
                             Confirmar Contraseña
                         </Label>
                         <Input
@@ -173,6 +191,7 @@ export default function RegisterPage() {
                             onChange={handleChange}
                             required
                             disabled={isLoading}
+                            className="!bg-white !text-gray-900 !border-gray-300"
                         />
                     </div>
                 </CardContent>

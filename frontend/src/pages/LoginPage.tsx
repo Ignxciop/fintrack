@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
@@ -22,28 +22,34 @@ export default function LoginPage() {
     const { login } = useAuth();
     const navigate = useNavigate();
 
+    // Resetear el estado cuando el componente se monta
+    useEffect(() => {
+        setError("");
+        setIsLoading(false);
+    }, []);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError("");
         setIsLoading(true);
 
         try {
+            setError("");
             await login(email, password);
             navigate("/");
         } catch (err: any) {
             // Extraer el mensaje de error del backend
             const errorMessage =
+                err.response?.data?.error ||
                 err.response?.data?.message ||
                 err.message ||
                 "Error al iniciar sesión";
             setError(errorMessage);
-        } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <Card>
+        <Card className="!bg-white !text-gray-900 !border-gray-200">
             <CardHeader className="space-y-1">
                 <CardTitle className="text-2xl font-bold text-center">
                     Iniciar Sesión
@@ -61,7 +67,9 @@ export default function LoginPage() {
                     )}
 
                     <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="email" className="!text-gray-900">
+                            Email
+                        </Label>
                         <Input
                             id="email"
                             type="email"
@@ -70,11 +78,14 @@ export default function LoginPage() {
                             onChange={(e) => setEmail(e.target.value)}
                             required
                             disabled={isLoading}
+                            className="!bg-white !text-gray-900 !border-gray-300"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="password">Contraseña</Label>
+                        <Label htmlFor="password" className="!text-gray-900">
+                            Contraseña
+                        </Label>
                         <Input
                             id="password"
                             type="password"
@@ -83,6 +94,7 @@ export default function LoginPage() {
                             onChange={(e) => setPassword(e.target.value)}
                             required
                             disabled={isLoading}
+                            className="!bg-white !text-gray-900 !border-gray-300"
                         />
                     </div>
                 </CardContent>

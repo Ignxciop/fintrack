@@ -90,8 +90,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     };
 
     const logout = async () => {
-        await authService.logout();
-        setUser(null);
+        try {
+            await authService.logout();
+        } catch (error) {
+            logger.error("Error al cerrar sesión:", error);
+        } finally {
+            // Limpiar siempre el estado local y localStorage
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+            setUser(null);
+        }
     };
 
     return (

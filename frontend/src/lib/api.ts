@@ -40,6 +40,17 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
+        // No interceptar errores de autenticación (login, register, refresh)
+        if (
+            originalRequest.url?.includes("/auth/login") ||
+            originalRequest.url?.includes("/auth/register") ||
+            originalRequest.url?.includes("/auth/refresh") ||
+            originalRequest.url?.includes("/auth/verify-email") ||
+            originalRequest.url?.includes("/auth/resend-verification")
+        ) {
+            return Promise.reject(error);
+        }
+
         if (error.response?.status === 401 && !originalRequest._retry) {
             if (isRefreshing) {
                 return new Promise((resolve) => {
