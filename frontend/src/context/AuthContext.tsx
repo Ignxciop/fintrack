@@ -26,7 +26,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Verificar si hay un usuario autenticado al cargar la app
     useEffect(() => {
         const initAuth = async () => {
             const token = localStorage.getItem("accessToken");
@@ -57,7 +56,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
                 setUser(user);
             }
         } catch (error) {
-            // Re-lanzar el error para que LoginPage pueda manejarlo
             throw error;
         }
     };
@@ -76,12 +74,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
                 lastname,
             });
 
-            // Si requiere verificación, retornar para que RegisterPage maneje la redirección
             if (response.data.requiresVerification) {
                 return { requiresVerification: true };
             }
 
-            // Si no requiere verificación, guardar tokens y usuario
             const { user, accessToken, refreshToken } = response.data;
             if (accessToken && refreshToken) {
                 localStorage.setItem("accessToken", accessToken);
@@ -89,7 +85,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
                 setUser(user);
             }
         } catch (error) {
-            // Re-lanzar el error para que RegisterPage pueda manejarlo
             throw error;
         }
     };

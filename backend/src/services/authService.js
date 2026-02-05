@@ -7,7 +7,6 @@ import VerificationService from "./verificationService.js";
 import { validateEmail } from "../utils/emailValidator.js";
 
 export class AuthService {
-    // Genera un access token JWT
     static generateAccessToken(userId) {
         return jwt.sign({ userId }, config.jwtSecret, {
             expiresIn: config.jwtExpiresIn,
@@ -17,7 +16,6 @@ export class AuthService {
     static async register(userData, deviceInfo = null, ipAddress = null) {
         const { email, password, name, lastname } = userData;
 
-        // Validar que el email sea de un proveedor legítimo (no temporal)
         const emailValidation = validateEmail(email);
         if (!emailValidation.valid) {
             const error = new Error(emailValidation.reason);
@@ -25,13 +23,11 @@ export class AuthService {
             throw error;
         }
 
-        // Verificar si el usuario ya existe
         const existingUser = await prisma.user.findUnique({
             where: { email },
         });
 
         if (existingUser) {
-            // Si el usuario existe pero NO está verificado, regenerar código
             if (!existingUser.isVerified) {
                 await VerificationService.createVerification(existingUser.id);
 
@@ -47,16 +43,13 @@ export class AuthService {
                 };
             }
 
-            // Si ya está verificado, error
             const error = new Error("El usuario ya existe y está verificado");
             error.statusCode = 409;
             throw error;
         }
 
-        // Hash de la contraseña
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Crear usuario NO verificado
         const user = await prisma.user.create({
             data: {
                 email,
@@ -75,10 +68,8 @@ export class AuthService {
             },
         });
 
-        // Generar código de verificación
         await VerificationService.createVerification(user.id);
 
-        // NO generar tokens hasta que verifique el email
         return {
             user,
             requiresVerification: true,
@@ -88,7 +79,6 @@ export class AuthService {
     static async login(credentials, deviceInfo = null, ipAddress = null) {
         const { email, password } = credentials;
 
-        // Buscar usuario
         const user = await prisma.user.findUnique({
             where: { email },
         });
@@ -99,7 +89,6 @@ export class AuthService {
             throw error;
         }
 
-        // Verificar contraseña
         const isValidPassword = await bcrypt.compare(password, user.password);
 
         if (!isValidPassword) {
@@ -108,7 +97,6 @@ export class AuthService {
             throw error;
         }
 
-        // Verificar si el usuario ha confirmado su email
         if (!user.isVerified) {
             const error = new Error(
                 "Debes verificar tu email antes de iniciar sesión",
@@ -117,7 +105,6 @@ export class AuthService {
             throw error;
         }
 
-        // Generar tokens
         const accessToken = this.generateAccessToken(user.id);
         const refreshToken = await RefreshTokenService.createRefreshToken(
             user.id,
@@ -125,7 +112,6 @@ export class AuthService {
             ipAddress,
         );
 
-        // Retornar usuario sin contraseña
         const { password: _, ...userWithoutPassword } = user;
 
         return {
@@ -140,27 +126,22 @@ export class AuthService {
         deviceInfo = null,
         ipAddress = null,
     ) {
-        // Validar el refresh token
         const refreshToken =
             await RefreshTokenService.validateRefreshToken(refreshTokenString);
 
-        // Generar nuevo access token
         const accessToken = this.generateAccessToken(refreshToken.userId);
 
-        // Rotar el refresh token (best practice)
         const newRefreshToken = await RefreshTokenService.createRefreshToken(
             refreshToken.userId,
             deviceInfo,
             ipAddress,
         );
 
-        // Revocar el refresh token antiguo
         await RefreshTokenService.revokeRefreshToken(
             refreshTokenString,
             newRefreshToken.token,
         );
 
-        // Retornar usuario sin contraseña
         const { password: _, ...userWithoutPassword } = refreshToken.user;
 
         return {
@@ -226,10 +207,8 @@ export class AuthService {
             throw error;
         }
 
-        // Validar código
         await VerificationService.validateCode(user.id, code);
 
-        // Generar tokens después de verificar
         const accessToken = this.generateAccessToken(user.id);
         const refreshToken = await RefreshTokenService.createRefreshToken(
             user.id,
@@ -237,7 +216,6 @@ export class AuthService {
             ipAddress,
         );
 
-        // Obtener usuario actualizado
         const verifiedUser = await prisma.user.findUnique({
             where: { id: user.id },
             select: {
@@ -257,9 +235,6 @@ export class AuthService {
         };
     }
 
-    /**
-     * Reenviar código de verificación
-     */
     static async resendVerification(email) {
         await VerificationService.resendCode(email);
         return { message: "Código de verificación reenviado" };

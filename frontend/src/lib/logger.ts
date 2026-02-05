@@ -28,10 +28,6 @@ const logger = {
         if (isDevelopment) {
             console.error(...args);
         }
-        // En producción, podrías enviar errores a un servicio como Sentry
-        // if (!isDevelopment) {
-        //     Sentry.captureException(args[0]);
-        // }
     },
 
     debug: (...args: unknown[]) => {

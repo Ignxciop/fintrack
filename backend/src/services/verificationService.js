@@ -3,18 +3,11 @@ import { prisma } from "../config/prisma.js";
 import { sendVerificationEmail } from "./emailService.js";
 
 class VerificationService {
-    /**
-     * Generar código de verificación de 6 dígitos
-     */
     static generateCode() {
         return crypto.randomInt(100000, 999999).toString();
     }
 
-    /**
-     * Crear código de verificación para un usuario
-     */
     static async createVerification(userId) {
-        // Invalidar códigos anteriores del usuario
         await prisma.verificationCode.updateMany({
             where: {
                 userId,
@@ -28,9 +21,8 @@ class VerificationService {
             },
         });
 
-        // Generar nuevo código
         const code = this.generateCode();
-        const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutos
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
         const verification = await prisma.verificationCode.create({
             data: {
@@ -40,13 +32,11 @@ class VerificationService {
             },
         });
 
-        // Obtener email del usuario para enviar el código
         const user = await prisma.user.findUnique({
             where: { id: userId },
             select: { email: true },
         });
 
-        // Enviar email con el código
         if (user?.email) {
             await sendVerificationEmail(user.email, code);
         }
@@ -54,9 +44,6 @@ class VerificationService {
         return verification;
     }
 
-    /**
-     * Validar código de verificación
-     */
     static async validateCode(userId, code) {
         const verification = await prisma.verificationCode.findFirst({
             where: {
@@ -77,13 +64,11 @@ class VerificationService {
             throw error;
         }
 
-        // Marcar como usado
         await prisma.verificationCode.update({
             where: { id: verification.id },
             data: { isUsed: true },
         });
 
-        // Marcar usuario como verificado
         await prisma.user.update({
             where: { id: userId },
             data: { isVerified: true },
@@ -92,9 +77,6 @@ class VerificationService {
         return true;
     }
 
-    /**
-     * Reenviar código de verificación
-     */
     static async resendCode(email) {
         const user = await prisma.user.findUnique({
             where: { email },
@@ -112,13 +94,9 @@ class VerificationService {
             throw error;
         }
 
-        // Crear nuevo código
         return await this.createVerification(user.id);
     }
 
-    /**
-     * Limpiar códigos expirados (tarea de mantenimiento)
-     */
     static async cleanExpiredCodes() {
         const result = await prisma.verificationCode.deleteMany({
             where: {
@@ -131,9 +109,6 @@ class VerificationService {
         return result.count;
     }
 
-    /**
-     * Obtener usuario por email para verificación
-     */
     static async getUserByEmail(email) {
         return await prisma.user.findUnique({
             where: { email },

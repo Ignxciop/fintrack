@@ -40,13 +40,11 @@ export const authService = {
         return response.data;
     },
 
-    // Inicio de sesión
     login: async (data: LoginData): Promise<AuthResponse> => {
         const response = await api.post("/auth/login", data);
         return response.data;
     },
 
-    // Cerrar sesión
     logout: async (): Promise<void> => {
         const refreshToken = localStorage.getItem("refreshToken");
         if (refreshToken) {
@@ -56,25 +54,21 @@ export const authService = {
         localStorage.removeItem("refreshToken");
     },
 
-    // Obtener usuario actual
     getMe: async (): Promise<User> => {
         const response = await api.get("/auth/me");
         return response.data.data.user;
     },
 
-    // Renovar token
     refreshToken: async (refreshToken: string): Promise<AuthResponse> => {
         const response = await api.post("/auth/refresh", { refreshToken });
         return response.data;
     },
 
-    // Verificar email con código
     verifyEmail: async (email: string, code: string): Promise<AuthResponse> => {
         const response = await api.post("/auth/verify-email", { email, code });
         return response.data;
     },
 
-    // Reenviar código de verificación
     resendVerification: async (
         email: string,
     ): Promise<{ success: boolean; message: string }> => {
