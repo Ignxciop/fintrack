@@ -36,7 +36,6 @@ export default function HomePage() {
         localStorage.setItem("hideBalances", String(newValue));
     };
 
-    // Métricas
     const [totalBalance, setTotalBalance] = useState(0);
     const [totalDebt, setTotalDebt] = useState(0);
     const [monthIncome, setMonthIncome] = useState(0);
@@ -53,10 +52,8 @@ export default function HomePage() {
         try {
             setLoading(true);
 
-            // Cargar cuentas activas
             const accounts = await accountService.getAccounts(false);
 
-            // Calcular saldo total y deuda total
             let balance = 0;
             let debt = 0;
 
@@ -72,7 +69,6 @@ export default function HomePage() {
             setTotalBalance(balance);
             setTotalDebt(debt);
 
-            // Obtener transacciones del mes actual
             const now = new Date();
             const firstDayOfMonth = new Date(
                 now.getFullYear(),
@@ -92,7 +88,6 @@ export default function HomePage() {
                     limit: 1000,
                 });
 
-            // Calcular ingresos y gastos del mes
             let income = 0;
             let expense = 0;
 
@@ -109,7 +104,6 @@ export default function HomePage() {
             setMonthExpense(expense);
             setMonthBalance(income - expense);
 
-            // Obtener transacciones del mes anterior
             const firstDayPrevMonth = new Date(
                 now.getFullYear(),
                 now.getMonth() - 1,
@@ -128,7 +122,6 @@ export default function HomePage() {
                     limit: 1000,
                 });
 
-            // Calcular ingresos y gastos del mes anterior
             let prevIncome = 0;
             let prevExpense = 0;
 
@@ -225,9 +218,7 @@ export default function HomePage() {
                 </Button>
             </div>
 
-            {/* Métricas principales */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {/* Saldo Total */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
@@ -245,7 +236,6 @@ export default function HomePage() {
                     </CardContent>
                 </Card>
 
-                {/* Deuda Total */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
@@ -263,7 +253,6 @@ export default function HomePage() {
                     </CardContent>
                 </Card>
 
-                {/* Ingresos del Mes */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
@@ -287,7 +276,6 @@ export default function HomePage() {
                     </CardContent>
                 </Card>
 
-                {/* Gastos del Mes */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
@@ -312,7 +300,6 @@ export default function HomePage() {
                 </Card>
             </div>
 
-            {/* Balance Mensual */}
             <div className="grid gap-4 md:grid-cols-2">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -338,7 +325,6 @@ export default function HomePage() {
                     </CardContent>
                 </Card>
 
-                {/* Tendencia */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">

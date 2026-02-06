@@ -127,7 +127,6 @@ export default function TransactionsPage() {
     };
 
     const formatDate = (date: string) => {
-        // Parsear la fecha como local, no UTC
         const [year, month, day] = date.split("T")[0].split("-");
         const localDate = new Date(
             parseInt(year),

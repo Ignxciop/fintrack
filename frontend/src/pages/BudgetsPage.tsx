@@ -182,7 +182,6 @@ export default function BudgetsPage() {
                             }`}
                         >
                             <CardContent className="space-y-3">
-                                {/* Header con nombre y switch */}
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1">
                                         <h3 className="font-semibold text-gray-900 dark:text-gray-100">
@@ -204,7 +203,6 @@ export default function BudgetsPage() {
                                     />
                                 </div>
 
-                                {/* Monto gastado vs total */}
                                 <div className="space-y-1">
                                     <div className="flex justify-between items-baseline">
                                         <span
@@ -217,7 +215,6 @@ export default function BudgetsPage() {
                                         </span>
                                     </div>
 
-                                    {/* Barra de progreso */}
                                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
                                         <div
                                             className={`h-full transition-all duration-300 ${getStatusColor(budget.status || "ok")}`}
@@ -227,7 +224,6 @@ export default function BudgetsPage() {
                                         />
                                     </div>
 
-                                    {/* Porcentaje y estado */}
                                     <div className="flex justify-between items-center text-xs">
                                         <span
                                             className={getStatusTextColor(
@@ -254,7 +250,6 @@ export default function BudgetsPage() {
                                     </div>
                                 </div>
 
-                                {/* Acciones */}
                                 <div className="flex gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                                     <Button
                                         variant="outline"
@@ -283,7 +278,6 @@ export default function BudgetsPage() {
                 </div>
             )}
 
-            {/* Dialog para crear/editar */}
             <Dialog open={showDialog} onOpenChange={setShowDialog}>
                 <DialogContent className="dark:bg-gray-900 dark:border-gray-800">
                     <DialogHeader>
@@ -301,7 +295,6 @@ export default function BudgetsPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Alert Dialog para eliminar */}
             <AlertDialog
                 open={!!budgetToDelete}
                 onOpenChange={() => setBudgetToDelete(null)}
