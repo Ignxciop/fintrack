@@ -21,7 +21,6 @@ function App() {
             <AuthProvider>
                 <BrowserRouter>
                     <Routes>
-                        {/* Rutas públicas - con AuthLayout */}
                         <Route
                             element={
                                 <PublicRoute>
@@ -40,7 +39,6 @@ function App() {
                             />
                         </Route>
 
-                        {/* Rutas protegidas - con MainLayout */}
                         <Route
                             element={
                                 <ProtectedRoute>

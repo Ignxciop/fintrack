@@ -4,7 +4,6 @@ export default function AuthLayout() {
     return (
         <div className="light min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-4 py-12">
             <div className="w-full max-w-md">
-                {/* Logo/Brand */}
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl mb-4 shadow-lg">
                         <svg
@@ -29,10 +28,8 @@ export default function AuthLayout() {
                     </p>
                 </div>
 
-                {/* Contenido de la página (Outlet) */}
                 <Outlet />
 
-                {/* Footer */}
                 <div className="mt-8 text-center text-sm text-gray-600">
                     <p>
                         © {new Date().getFullYear()} FinTrack. Todos los

@@ -97,13 +97,11 @@ export default function TransactionForm({
     const [showNewCategory, setShowNewCategory] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
-    // Cargar cuentas al montar
     useEffect(() => {
         loadAccounts();
         loadCategories();
     }, []);
 
-    // Sincronizar formData con transaction cuando cambia
     useEffect(() => {
         if (transaction) {
             const newFormData = {
@@ -117,7 +115,6 @@ export default function TransactionForm({
             };
             setFormData(newFormData);
 
-            // Buscar y setear la cuenta seleccionada inmediatamente
             if (accounts.length > 0) {
                 const account = accounts.find(
                     (a) => a.id === transaction.accountId,
@@ -138,7 +135,6 @@ export default function TransactionForm({
         }
     }, [transaction, accounts]);
 
-    // Actualizar selectedAccount cuando cambia accountId
     useEffect(() => {
         if (formData.accountId && accounts.length > 0) {
             const account = accounts.find((a) => a.id === formData.accountId);
