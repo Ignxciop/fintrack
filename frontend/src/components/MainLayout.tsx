@@ -37,6 +37,7 @@ import {
     ArrowLeftRight,
     Repeat,
     PiggyBank,
+    Calendar,
 } from "lucide-react";
 
 export default function MainLayout() {
@@ -60,6 +61,7 @@ export default function MainLayout() {
         { title: "Movimientos", icon: ArrowLeftRight, url: "/movimientos" },
         { title: "Recurrentes", icon: Repeat, url: "/recurrentes" },
         { title: "Presupuestos", icon: PiggyBank, url: "/presupuestos" },
+        { title: "Calendario", icon: Calendar, url: "/calendario" },
     ];
 
     const getCurrentPageTitle = () => {

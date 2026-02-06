@@ -13,6 +13,7 @@ import AccountsPage from "./pages/AccountsPage";
 import TransactionsPage from "./pages/TransactionsPage";
 import RecurrentsPage from "./pages/RecurrentsPage";
 import BudgetsPage from "./pages/BudgetsPage";
+import CalendarPage from "./pages/Calendar";
 
 function App() {
     return (
@@ -60,6 +61,10 @@ function App() {
                             <Route
                                 path="/presupuestos"
                                 element={<BudgetsPage />}
+                            />
+                            <Route
+                                path="/calendario"
+                                element={<CalendarPage />}
                             />
                         </Route>
                     </Routes>
