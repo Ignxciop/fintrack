@@ -34,7 +34,6 @@ export interface LoginData {
 }
 
 export const authService = {
-    // Registro de usuario
     register: async (data: RegisterData): Promise<AuthResponse> => {
         const response = await api.post("/auth/register", data);
         return response.data;

@@ -24,7 +24,6 @@ export interface Budget {
         name: string;
         type: string;
     } | null;
-    // Estos campos se agregan cuando se obtiene con estado
     spent?: number;
     percentage?: number;
     status?: BudgetStatus;
@@ -74,41 +73,26 @@ export interface BudgetStatusDetail {
     }>;
 }
 
-/**
- * Obtiene todos los presupuestos del usuario con su estado
- */
 async function getBudgets(): Promise<Budget[]> {
     const response = await api.get("/budgets");
     return response.data;
 }
 
-/**
- * Obtiene un presupuesto por ID
- */
 async function getBudgetById(id: string): Promise<Budget> {
     const response = await api.get(`/budgets/${id}`);
     return response.data;
 }
 
-/**
- * Obtiene el estado detallado de un presupuesto con sus transacciones
- */
 async function getBudgetStatus(id: string): Promise<BudgetStatusDetail> {
     const response = await api.get(`/budgets/${id}/status`);
     return response.data;
 }
 
-/**
- * Crea un nuevo presupuesto
- */
 async function createBudget(data: CreateBudgetData): Promise<Budget> {
     const response = await api.post("/budgets", data);
     return response.data;
 }
 
-/**
- * Actualiza un presupuesto existente
- */
 async function updateBudget(
     id: string,
     data: UpdateBudgetData,
@@ -117,17 +101,11 @@ async function updateBudget(
     return response.data;
 }
 
-/**
- * Activa o desactiva un presupuesto
- */
 async function toggleActive(id: string): Promise<Budget> {
     const response = await api.patch(`/budgets/${id}/toggle`);
     return response.data;
 }
 
-/**
- * Elimina un presupuesto
- */
 async function deleteBudget(id: string): Promise<void> {
     await api.delete(`/budgets/${id}`);
 }
