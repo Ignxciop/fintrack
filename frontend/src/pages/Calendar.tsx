@@ -29,138 +29,120 @@ const CalendarPage = () => {
         fetchData();
     }, [currentMonth]);
 
+    const addIndicators = () => {
+        if (!calendarRef.current) return;
+
+        const buttons = calendarRef.current.querySelectorAll(".rdp-day_button");
+
+        if (!buttons || buttons.length === 0) return;
+
+        buttons.forEach((button) => {
+            const dataDay = button.getAttribute("data-day");
+
+            let dayNumber: number;
+
+            if (dataDay) {
+                dayNumber = parseInt(dataDay);
+            } else {
+                const text = button.textContent?.trim();
+                dayNumber = text ? parseInt(text) : NaN;
+            }
+
+            if (isNaN(dayNumber)) return;
+
+            const year = currentMonth.getFullYear();
+            const month = String(currentMonth.getMonth() + 1).padStart(2, "0");
+            const day = String(dayNumber).padStart(2, "0");
+            const dateKey = `${year}-${month}-${day}`;
+
+            const transactions = dayTransactions[dateKey];
+            const recurringCount = dayRecurrings[dateKey] || 0;
+
+            if (
+                (!transactions || transactions.length === 0) &&
+                recurringCount === 0
+            )
+                return;
+
+            const counts = {
+                INCOME: 0,
+                EXPENSE: 0,
+                ADJUSTMENT: 0,
+                TRANSFER: 0,
+                RECURRING: recurringCount,
+            };
+
+            if (transactions) {
+                transactions.forEach((transaction) => {
+                    if (transaction.type === "INCOME") counts.INCOME++;
+                    else if (transaction.type === "EXPENSE") counts.EXPENSE++;
+                    else if (
+                        transaction.type === "ADJUSTMENT_POSITIVE" ||
+                        transaction.type === "ADJUSTMENT_NEGATIVE"
+                    )
+                        counts.ADJUSTMENT++;
+                    else if (transaction.type === "TRANSFER") counts.TRANSFER++;
+                });
+            }
+
+            const existing = button.querySelector(".day-indicators");
+            if (existing) existing.remove();
+
+            const container = document.createElement("div");
+            container.className = "day-indicators";
+            container.style.cssText =
+                "display: flex !important; flex-direction: row !important; justify-content: center !important; align-items: center !important; position: absolute !important; top: 65% !important; left: 50% !important; transform: translateX(-50%) !important;";
+
+            if (counts.INCOME > 0) {
+                const dot = document.createElement("div");
+                dot.className = "transaction-dot";
+                dot.style.cssText = "background-color: #22c55e !important;";
+                dot.title = `${counts.INCOME} ingreso${counts.INCOME > 1 ? "s" : ""}`;
+                container.appendChild(dot);
+            }
+            if (counts.EXPENSE > 0) {
+                const dot = document.createElement("div");
+                dot.className = "transaction-dot";
+                dot.style.cssText = "background-color: #ef4444 !important;";
+                dot.title = `${counts.EXPENSE} gasto${counts.EXPENSE > 1 ? "s" : ""}`;
+                container.appendChild(dot);
+            }
+            if (counts.TRANSFER > 0) {
+                const dot = document.createElement("div");
+                dot.className = "transaction-dot";
+                dot.style.cssText = "background-color: #3b82f6 !important;";
+                dot.title = `${counts.TRANSFER} transferencia${counts.TRANSFER > 1 ? "s" : ""}`;
+                container.appendChild(dot);
+            }
+            if (counts.ADJUSTMENT > 0) {
+                const dot = document.createElement("div");
+                dot.className = "transaction-dot";
+                dot.style.cssText = "background-color: #f97316 !important;";
+                dot.title = `${counts.ADJUSTMENT} ajuste${counts.ADJUSTMENT > 1 ? "s" : ""}`;
+                container.appendChild(dot);
+            }
+            if (counts.RECURRING > 0) {
+                const dot = document.createElement("div");
+                dot.className = "transaction-dot";
+                dot.style.cssText = "background-color: #a855f7 !important;";
+                dot.title = `${counts.RECURRING} recurrente${counts.RECURRING > 1 ? "s" : ""}`;
+                container.appendChild(dot);
+            }
+
+            if (container.children.length > 0) {
+                button.appendChild(container);
+            }
+        });
+    };
+
     useEffect(() => {
         if (loading) return;
-
-        let attempts = 0;
-        const maxAttempts = 10;
-
-        const addIndicators = () => {
-            attempts++;
-
-            if (!calendarRef.current) {
-                if (attempts < maxAttempts) {
-                    setTimeout(addIndicators, 200);
-                }
-                return;
-            }
-
-            const buttons =
-                calendarRef.current.querySelectorAll(".rdp-day_button");
-
-            if (!buttons || buttons.length === 0) {
-                if (attempts < maxAttempts) {
-                    setTimeout(addIndicators, 200);
-                }
-                return;
-            }
-
-            buttons.forEach((button) => {
-                const dataDay = button.getAttribute("data-day");
-
-                let dayNumber: number;
-
-                if (dataDay) {
-                    dayNumber = parseInt(dataDay);
-                } else {
-                    const text = button.textContent?.trim();
-                    dayNumber = text ? parseInt(text) : NaN;
-                }
-
-                if (isNaN(dayNumber)) return;
-
-                const year = currentMonth.getFullYear();
-                const month = String(currentMonth.getMonth() + 1).padStart(
-                    2,
-                    "0",
-                );
-                const day = String(dayNumber).padStart(2, "0");
-                const dateKey = `${year}-${month}-${day}`;
-
-                const transactions = dayTransactions[dateKey];
-                const recurringCount = dayRecurrings[dateKey] || 0;
-
-                if (
-                    (!transactions || transactions.length === 0) &&
-                    recurringCount === 0
-                )
-                    return;
-
-                const counts = {
-                    INCOME: 0,
-                    EXPENSE: 0,
-                    ADJUSTMENT: 0,
-                    TRANSFER: 0,
-                    RECURRING: recurringCount,
-                };
-
-                if (transactions) {
-                    transactions.forEach((transaction) => {
-                        if (transaction.type === "INCOME") counts.INCOME++;
-                        else if (transaction.type === "EXPENSE")
-                            counts.EXPENSE++;
-                        else if (
-                            transaction.type === "ADJUSTMENT_POSITIVE" ||
-                            transaction.type === "ADJUSTMENT_NEGATIVE"
-                        )
-                            counts.ADJUSTMENT++;
-                        else if (transaction.type === "TRANSFER")
-                            counts.TRANSFER++;
-                    });
-                }
-
-                const existing = button.querySelector(".day-indicators");
-                if (existing) existing.remove();
-
-                const container = document.createElement("div");
-                container.className = "day-indicators";
-                container.style.cssText =
-                    "display: flex !important; flex-direction: row !important; justify-content: center !important; align-items: center !important; position: absolute !important; top: 65% !important; left: 50% !important; transform: translateX(-50%) !important;";
-
-                if (counts.INCOME > 0) {
-                    const dot = document.createElement("div");
-                    dot.className = "transaction-dot";
-                    dot.style.cssText = "background-color: #22c55e !important;";
-                    dot.title = `${counts.INCOME} ingreso${counts.INCOME > 1 ? "s" : ""}`;
-                    container.appendChild(dot);
-                }
-                if (counts.EXPENSE > 0) {
-                    const dot = document.createElement("div");
-                    dot.className = "transaction-dot";
-                    dot.style.cssText = "background-color: #ef4444 !important;";
-                    dot.title = `${counts.EXPENSE} gasto${counts.EXPENSE > 1 ? "s" : ""}`;
-                    container.appendChild(dot);
-                }
-                if (counts.TRANSFER > 0) {
-                    const dot = document.createElement("div");
-                    dot.className = "transaction-dot";
-                    dot.style.cssText = "background-color: #3b82f6 !important;";
-                    dot.title = `${counts.TRANSFER} transferencia${counts.TRANSFER > 1 ? "s" : ""}`;
-                    container.appendChild(dot);
-                }
-                if (counts.ADJUSTMENT > 0) {
-                    const dot = document.createElement("div");
-                    dot.className = "transaction-dot";
-                    dot.style.cssText = "background-color: #f97316 !important;";
-                    dot.title = `${counts.ADJUSTMENT} ajuste${counts.ADJUSTMENT > 1 ? "s" : ""}`;
-                    container.appendChild(dot);
-                }
-                if (counts.RECURRING > 0) {
-                    const dot = document.createElement("div");
-                    dot.className = "transaction-dot";
-                    dot.style.cssText = "background-color: #a855f7 !important;";
-                    dot.title = `${counts.RECURRING} recurrente${counts.RECURRING > 1 ? "s" : ""}`;
-                    container.appendChild(dot);
-                }
-
-                if (container.children.length > 0) {
-                    button.appendChild(container);
-                }
-            });
-        };
-
         setTimeout(addIndicators, 300);
-    }, [loading, dayTransactions, dayRecurrings, currentMonth, selectedDate]);
+    }, [loading, dayTransactions, dayRecurrings, currentMonth]);
+
+    const handleDayClick = () => {
+        setTimeout(addIndicators, 100);
+    };
 
     const calculateNextExecutionDate = (
         lastDate: Date,
@@ -372,9 +354,12 @@ const CalendarPage = () => {
                             <Calendar
                                 mode="single"
                                 selected={selectedDate}
-                                onSelect={(date) =>
-                                    date && setSelectedDate(date)
-                                }
+                                onSelect={(date) => {
+                                    if (date) {
+                                        setSelectedDate(date);
+                                        handleDayClick();
+                                    }
+                                }}
                                 month={currentMonth}
                                 onMonthChange={setCurrentMonth}
                                 locale={es}
