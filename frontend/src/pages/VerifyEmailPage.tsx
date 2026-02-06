@@ -27,14 +27,12 @@ export default function VerifyEmailPage() {
     const location = useLocation();
     const email = location.state?.email;
 
-    // Si no hay email, redirigir a registro
     useEffect(() => {
         if (!email) {
             navigate("/registro");
         }
     }, [email, navigate]);
 
-    // Inicializar timer desde localStorage
     useEffect(() => {
         if (!email) return;
 
@@ -50,7 +48,6 @@ export default function VerifyEmailPage() {
             setTimeLeft(remaining);
             setCanResend(remaining === 0);
         } else {
-            // Si no hay timestamp, crear uno nuevo (5 minutos)
             const expiresAt = Date.now() + 5 * 60 * 1000;
             localStorage.setItem(
                 `verification_expires_${email}`,
@@ -60,7 +57,6 @@ export default function VerifyEmailPage() {
         }
     }, [email]);
 
-    // Timer de cuenta regresiva
     useEffect(() => {
         if (timeLeft <= 0) {
             setCanResend(true);
@@ -101,7 +97,6 @@ export default function VerifyEmailPage() {
         try {
             const response = await authService.verifyEmail(email, code);
 
-            // Guardar tokens
             if (response.data.accessToken && response.data.refreshToken) {
                 localStorage.setItem("accessToken", response.data.accessToken);
                 localStorage.setItem(
@@ -112,7 +107,6 @@ export default function VerifyEmailPage() {
 
             setSuccess("¡Email verificado exitosamente!");
 
-            // Redirigir a home después de 1 segundo
             setTimeout(() => {
                 navigate("/");
             }, 1000);
@@ -136,7 +130,6 @@ export default function VerifyEmailPage() {
             await authService.resendVerification(email);
             setSuccess("Código reenviado. Por favor revisa tu email.");
 
-            // Actualizar timestamp de expiración
             const expiresAt = Date.now() + 5 * 60 * 1000;
             localStorage.setItem(
                 `verification_expires_${email}`,
@@ -156,7 +149,7 @@ export default function VerifyEmailPage() {
     };
 
     if (!email) {
-        return null; // Se redirigirá en el useEffect
+        return null;
     }
 
     return (

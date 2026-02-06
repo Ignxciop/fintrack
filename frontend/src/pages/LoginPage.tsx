@@ -22,7 +22,6 @@ export default function LoginPage() {
     const { login } = useAuth();
     const navigate = useNavigate();
 
-    // Resetear el estado cuando el componente se monta
     useEffect(() => {
         setError("");
         setIsLoading(false);
@@ -37,7 +36,6 @@ export default function LoginPage() {
             await login(email, password);
             navigate("/");
         } catch (err: any) {
-            // Extraer el mensaje de error del backend
             const errorMessage =
                 err.response?.data?.error ||
                 err.response?.data?.message ||

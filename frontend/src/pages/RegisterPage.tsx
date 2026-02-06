@@ -38,7 +38,6 @@ export default function RegisterPage() {
         e.preventDefault();
         setError("");
 
-        // Validaciones
         if (formData.password !== formData.confirmPassword) {
             setError("Las contraseñas no coinciden");
             return;
@@ -59,9 +58,7 @@ export default function RegisterPage() {
                 formData.lastname,
             );
 
-            // Si requiere verificación, redirigir a página de verificación
             if (response?.requiresVerification) {
-                // Guardar timestamp de expiración (5 minutos desde ahora)
                 const expiresAt = Date.now() + 5 * 60 * 1000;
                 localStorage.setItem(
                     `verification_expires_${formData.email}`,
@@ -69,11 +66,9 @@ export default function RegisterPage() {
                 );
                 navigate("/verificacion", { state: { email: formData.email } });
             } else {
-                // Si no requiere verificación (caso futuro), ir a home
                 navigate("/");
             }
         } catch (err: any) {
-            // Extraer el mensaje de error del backend
             const errorMessage =
                 err.response?.data?.error ||
                 err.response?.data?.message ||
