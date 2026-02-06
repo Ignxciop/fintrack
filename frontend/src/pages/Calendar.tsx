@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
 import transactionService from "@/services/transactionService";
 import type { Transaction } from "@/services/transactionService";
+import recurringService from "@/services/recurringService";
+import type { Recurring } from "@/services/recurringService";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -12,17 +13,245 @@ interface DayTransactions {
     [date: string]: Transaction[];
 }
 
+interface DayRecurrings {
+    [date: string]: number;
+}
+
 const CalendarPage = () => {
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
     const [dayTransactions, setDayTransactions] = useState<DayTransactions>({});
+    const [dayRecurrings, setDayRecurrings] = useState<DayRecurrings>({});
     const [loading, setLoading] = useState(true);
+    const calendarRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        fetchTransactions();
+        fetchData();
     }, [currentMonth]);
 
-    const fetchTransactions = async () => {
+    useEffect(() => {
+        if (loading) return;
+
+        let attempts = 0;
+        const maxAttempts = 10;
+
+        const addIndicators = () => {
+            attempts++;
+
+            if (!calendarRef.current) {
+                if (attempts < maxAttempts) {
+                    setTimeout(addIndicators, 200);
+                }
+                return;
+            }
+
+            const buttons =
+                calendarRef.current.querySelectorAll(".rdp-day_button");
+
+            if (!buttons || buttons.length === 0) {
+                if (attempts < maxAttempts) {
+                    setTimeout(addIndicators, 200);
+                }
+                return;
+            }
+
+            buttons.forEach((button) => {
+                const dataDay = button.getAttribute("data-day");
+
+                let dayNumber: number;
+
+                if (dataDay) {
+                    dayNumber = parseInt(dataDay);
+                } else {
+                    const text = button.textContent?.trim();
+                    dayNumber = text ? parseInt(text) : NaN;
+                }
+
+                if (isNaN(dayNumber)) return;
+
+                const year = currentMonth.getFullYear();
+                const month = String(currentMonth.getMonth() + 1).padStart(
+                    2,
+                    "0",
+                );
+                const day = String(dayNumber).padStart(2, "0");
+                const dateKey = `${year}-${month}-${day}`;
+
+                const transactions = dayTransactions[dateKey];
+                const recurringCount = dayRecurrings[dateKey] || 0;
+
+                if (
+                    (!transactions || transactions.length === 0) &&
+                    recurringCount === 0
+                )
+                    return;
+
+                const counts = {
+                    INCOME: 0,
+                    EXPENSE: 0,
+                    ADJUSTMENT: 0,
+                    TRANSFER: 0,
+                    RECURRING: recurringCount,
+                };
+
+                if (transactions) {
+                    transactions.forEach((transaction) => {
+                        if (transaction.type === "INCOME") counts.INCOME++;
+                        else if (transaction.type === "EXPENSE")
+                            counts.EXPENSE++;
+                        else if (
+                            transaction.type === "ADJUSTMENT_POSITIVE" ||
+                            transaction.type === "ADJUSTMENT_NEGATIVE"
+                        )
+                            counts.ADJUSTMENT++;
+                        else if (transaction.type === "TRANSFER")
+                            counts.TRANSFER++;
+                    });
+                }
+
+                const existing = button.querySelector(".day-indicators");
+                if (existing) existing.remove();
+
+                const container = document.createElement("div");
+                container.className = "day-indicators";
+                container.style.cssText =
+                    "display: flex !important; flex-direction: row !important; justify-content: center !important; align-items: center !important; position: absolute !important; top: 65% !important; left: 50% !important; transform: translateX(-50%) !important;";
+
+                if (counts.INCOME > 0) {
+                    const dot = document.createElement("div");
+                    dot.className = "transaction-dot";
+                    dot.style.cssText = "background-color: #22c55e !important;";
+                    dot.title = `${counts.INCOME} ingreso${counts.INCOME > 1 ? "s" : ""}`;
+                    container.appendChild(dot);
+                }
+                if (counts.EXPENSE > 0) {
+                    const dot = document.createElement("div");
+                    dot.className = "transaction-dot";
+                    dot.style.cssText = "background-color: #ef4444 !important;";
+                    dot.title = `${counts.EXPENSE} gasto${counts.EXPENSE > 1 ? "s" : ""}`;
+                    container.appendChild(dot);
+                }
+                if (counts.TRANSFER > 0) {
+                    const dot = document.createElement("div");
+                    dot.className = "transaction-dot";
+                    dot.style.cssText = "background-color: #3b82f6 !important;";
+                    dot.title = `${counts.TRANSFER} transferencia${counts.TRANSFER > 1 ? "s" : ""}`;
+                    container.appendChild(dot);
+                }
+                if (counts.ADJUSTMENT > 0) {
+                    const dot = document.createElement("div");
+                    dot.className = "transaction-dot";
+                    dot.style.cssText = "background-color: #f97316 !important;";
+                    dot.title = `${counts.ADJUSTMENT} ajuste${counts.ADJUSTMENT > 1 ? "s" : ""}`;
+                    container.appendChild(dot);
+                }
+                if (counts.RECURRING > 0) {
+                    const dot = document.createElement("div");
+                    dot.className = "transaction-dot";
+                    dot.style.cssText = "background-color: #a855f7 !important;";
+                    dot.title = `${counts.RECURRING} recurrente${counts.RECURRING > 1 ? "s" : ""}`;
+                    container.appendChild(dot);
+                }
+
+                if (container.children.length > 0) {
+                    button.appendChild(container);
+                }
+            });
+        };
+
+        setTimeout(addIndicators, 300);
+    }, [loading, dayTransactions, dayRecurrings, currentMonth, selectedDate]);
+
+    const calculateNextExecutionDate = (
+        lastDate: Date,
+        frequency: string,
+        interval: number,
+    ): Date => {
+        const nextDate = new Date(lastDate);
+
+        switch (frequency) {
+            case "DAILY":
+                nextDate.setDate(nextDate.getDate() + interval);
+                break;
+            case "WEEKLY":
+                nextDate.setDate(nextDate.getDate() + interval * 7);
+                break;
+            case "MONTHLY":
+                nextDate.setMonth(nextDate.getMonth() + interval);
+                break;
+            case "YEARLY":
+                nextDate.setFullYear(nextDate.getFullYear() + interval);
+                break;
+        }
+
+        return nextDate;
+    };
+
+    const getRecurringDatesInRange = (
+        recurring: Recurring,
+        startDate: Date,
+        endDate: Date,
+    ): string[] => {
+        const dates: string[] = [];
+
+        let startDateStr = recurring.startDate;
+        if (startDateStr.includes("T")) {
+            startDateStr = startDateStr.split("T")[0];
+        }
+        const [startYear, startMonth, startDay] = startDateStr
+            .split("-")
+            .map(Number);
+        const start = new Date(startYear, startMonth - 1, startDay, 0, 0, 0, 0);
+
+        let endDateObj: Date;
+        if (recurring.endDate) {
+            let endDateStr = recurring.endDate;
+            if (endDateStr.includes("T")) {
+                endDateStr = endDateStr.split("T")[0];
+            }
+            const [endYear, endMonth, endDay] = endDateStr
+                .split("-")
+                .map(Number);
+            endDateObj = new Date(
+                endYear,
+                endMonth - 1,
+                endDay,
+                23,
+                59,
+                59,
+                999,
+            );
+        } else {
+            endDateObj = new Date(endDate);
+            endDateObj.setHours(23, 59, 59, 999);
+        }
+
+        const rangeStart = new Date(startDate);
+        rangeStart.setHours(0, 0, 0, 0);
+        const rangeEnd = new Date(endDate);
+        rangeEnd.setHours(23, 59, 59, 999);
+
+        let currentDate = new Date(start);
+
+        while (currentDate <= endDateObj && currentDate <= rangeEnd) {
+            if (currentDate >= rangeStart && currentDate >= start) {
+                const dateKey = format(currentDate, "yyyy-MM-dd");
+                dates.push(dateKey);
+            }
+
+            currentDate = calculateNextExecutionDate(
+                currentDate,
+                recurring.frequency,
+                recurring.interval,
+            );
+
+            if (dates.length > 100) break;
+        }
+
+        return dates;
+    };
+
+    const fetchData = async () => {
         setLoading(true);
         try {
             const start = startOfMonth(currentMonth);
@@ -34,13 +263,16 @@ const CalendarPage = () => {
                 limit: 1000,
             });
 
-            // Agrupar transacciones por día
             const grouped: DayTransactions = {};
+
             data.transactions.forEach((transaction: Transaction) => {
-                const dateKey = format(
-                    new Date(transaction.date),
-                    "yyyy-MM-dd",
-                );
+                let dateKey: string;
+                if (transaction.date.includes("T")) {
+                    dateKey = transaction.date.split("T")[0];
+                } else {
+                    dateKey = transaction.date.substring(0, 10);
+                }
+
                 if (!grouped[dateKey]) {
                     grouped[dateKey] = [];
                 }
@@ -48,8 +280,26 @@ const CalendarPage = () => {
             });
 
             setDayTransactions(grouped);
+
+            const recurringsData = await recurringService.getRecurrings();
+            const activeRecurrings = recurringsData.filter(
+                (r: Recurring) => r.isActive,
+            );
+
+            const recurringCounts: DayRecurrings = {};
+
+            activeRecurrings.forEach((recurring: Recurring) => {
+                const dates = getRecurringDatesInRange(recurring, start, end);
+                dates.forEach((dateKey) => {
+                    if (!recurringCounts[dateKey]) {
+                        recurringCounts[dateKey] = 0;
+                    }
+                    recurringCounts[dateKey]++;
+                });
+            });
+
+            setDayRecurrings(recurringCounts);
         } catch (error) {
-            console.error("Error al cargar transacciones:", error);
         } finally {
             setLoading(false);
         }
@@ -62,7 +312,7 @@ const CalendarPage = () => {
 
     const selectedDayTransactions = getTransactionsForDate(selectedDate);
 
-    const getTypeColor = (type: Transaction["type"]) => {
+    const getTypeColor = (type: string) => {
         switch (type) {
             case "INCOME":
                 return "bg-green-500";
@@ -78,41 +328,47 @@ const CalendarPage = () => {
         }
     };
 
-    const getTypeName = (type: Transaction["type"]) => {
+    const getTypeName = (type: string) => {
         switch (type) {
             case "INCOME":
                 return "Ingreso";
             case "EXPENSE":
                 return "Gasto";
             case "ADJUSTMENT_POSITIVE":
-                return "Ajuste Positivo";
+                return "Ajuste +";
             case "ADJUSTMENT_NEGATIVE":
-                return "Ajuste Negativo";
+                return "Ajuste -";
             case "TRANSFER":
                 return "Transferencia";
             default:
-                return type;
+                return "Desconocido";
         }
     };
 
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold">Calendario</h1>
-                <p className="text-muted-foreground mt-1">
-                    Visualiza tus transacciones en el calendario
-                </p>
+        <div className="p-6 space-y-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold">Calendario</h1>
+                    <p className="text-muted-foreground mt-1">
+                        Visualiza tus movimientos por día
+                    </p>
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Calendario - 2 columnas en desktop */}
-                <Card className="lg:col-span-2 p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+                <Card className="lg:col-span-2 p-3 sm:p-6">
                     {loading ? (
-                        <div className="flex items-center justify-center h-[400px]">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <div className="flex items-center justify-center h-96">
+                            <div className="text-center">
+                                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+                                <p className="text-muted-foreground">
+                                    Cargando transacciones...
+                                </p>
+                            </div>
                         </div>
                     ) : (
-                        <div>
+                        <div ref={calendarRef} className="w-full">
                             <Calendar
                                 mode="single"
                                 selected={selectedDate}
@@ -121,20 +377,84 @@ const CalendarPage = () => {
                                 }
                                 month={currentMonth}
                                 onMonthChange={setCurrentMonth}
+                                locale={es}
+                                weekStartsOn={1}
                                 className="w-full"
                             />
-                            {/* Indicadores visuales con CSS */}
                             <style>{`
+								.rdp {
+									width: 100% !important;
+									max-width: 100% !important;
+								}
+								.rdp-months {
+									width: 100% !important;
+								}
+								.rdp-month {
+									width: 100% !important;
+								}
+								.rdp-table {
+									width: 100% !important;
+								}
+								.rdp-cell {
+									padding: 2px !important;
+								}
+								
 								.rdp-day_button {
-									position: relative;
+									aspect-ratio: 1 / 1 !important;
+									width: 100% !important;
+									display: flex !important;
+									flex-direction: column !important;
+									align-items: center !important;
+                    justify-content: center !important;
+                    gap: 0px !important;
+                    padding: 4px !important;
+                    position: relative !important;
+								}
+								
+								.transaction-dot {
+									width: 5px !important;
+									height: 5px !important;
+									border-radius: 50% !important;
+									flex-shrink: 0 !important;
+								}
+								
+								.day-indicators {
+									gap: 3px !important;
+								}
+								
+								@media (max-width: 639px) {
+									.rdp-caption_label {
+										font-size: 14px !important;
+									}
+									.rdp-nav_button {
+										width: 28px !important;
+										height: 28px !important;
+									}
+									.rdp-head_cell {
+										font-size: 10px !important;
+										padding: 1px !important;
+									}
+									.rdp-cell {
+										padding: 1px !important;
+									}
+									.rdp-day_button {
+										padding: 2px 1px !important;
+										font-size: 11px !important;
+									}
+									.transaction-dot {
+										width: 3.5px !important;
+										height: 3.5px !important;
+									}
+									.day-indicators {
+										gap: 2px !important;
+									}
 								}
 							`}</style>
                         </div>
                     )}
                 </Card>
 
-                {/* Sidebar de transacciones - 1 columna en desktop */}
-                <Card className="lg:col-span-1 p-6">
+                <Card className="lg:col-span-1 p-3 sm:p-6">
                     <div className="space-y-4">
                         <div>
                             <h2 className="text-xl font-semibold">
@@ -216,76 +536,6 @@ const CalendarPage = () => {
                                 ))
                             )}
                         </div>
-
-                        {/* Resumen del día */}
-                        {selectedDayTransactions.length > 0 && (
-                            <div className="border-t pt-4 space-y-2">
-                                <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-green-500" />
-                                        <span className="text-muted-foreground">
-                                            Ingresos
-                                        </span>
-                                    </div>
-                                    <span className="font-medium text-green-600">
-                                        {
-                                            selectedDayTransactions.filter(
-                                                (t) => t.type === "INCOME",
-                                            ).length
-                                        }
-                                    </span>
-                                </div>
-                                <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-red-500" />
-                                        <span className="text-muted-foreground">
-                                            Gastos
-                                        </span>
-                                    </div>
-                                    <span className="font-medium text-red-600">
-                                        {
-                                            selectedDayTransactions.filter(
-                                                (t) => t.type === "EXPENSE",
-                                            ).length
-                                        }
-                                    </span>
-                                </div>
-                                <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-blue-500" />
-                                        <span className="text-muted-foreground">
-                                            Ajustes
-                                        </span>
-                                    </div>
-                                    <span className="font-medium">
-                                        {
-                                            selectedDayTransactions.filter(
-                                                (t) =>
-                                                    t.type ===
-                                                        "ADJUSTMENT_POSITIVE" ||
-                                                    t.type ===
-                                                        "ADJUSTMENT_NEGATIVE",
-                                            ).length
-                                        }
-                                    </span>
-                                </div>
-                                <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-orange-500" />
-                                        <span className="text-muted-foreground">
-                                            Transferencias
-                                        </span>
-                                    </div>
-                                    <span className="font-medium">
-                                        {
-                                            selectedDayTransactions.filter(
-                                                (t) => t.type === "TRANSFER",
-                                            ).length
-                                        }
-                                    </span>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </Card>
             </div>
