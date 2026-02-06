@@ -1,8 +1,3 @@
-/**
- * Logger wrapper para frontend
- * En producción no imprime logs, solo en desarrollo
- */
-
 const isDevelopment = import.meta.env.DEV;
 
 const logger = {

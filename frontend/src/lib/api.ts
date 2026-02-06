@@ -21,7 +21,6 @@ const onRefreshed = (token: string) => {
     refreshSubscribers = [];
 };
 
-// Crear instancia de axios
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem("accessToken");
@@ -40,7 +39,6 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        // No interceptar errores de autenticación (login, register, refresh)
         if (
             originalRequest.url?.includes("/auth/login") ||
             originalRequest.url?.includes("/auth/register") ||
