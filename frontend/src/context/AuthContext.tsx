@@ -95,7 +95,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         } catch (error) {
             logger.error("Error al cerrar sesión:", error);
         } finally {
-            // Limpiar siempre el estado local y localStorage
             localStorage.removeItem("accessToken");
             localStorage.removeItem("refreshToken");
             setUser(null);
